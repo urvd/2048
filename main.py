@@ -19,18 +19,27 @@ class Agent:
         self.environment = environment
         self.state = environment.states
         #
-        self.previous_state = self.state
+        self.previous_state = self.environment.previous_states
         ##self.policy = Policy(environment.states.keys(), ACTIONS)
-        self.score = 0
+        self.final_score = 0
         self.continu = False
 
     def continue_game(self):
         self.continu = self.environment.count_empty_cases() != 0
         if self.continu == False :
-            #self.state = self.environment.starting_point
-            #self.previous_state = self.state
-            self.score = 0
+            #TODO : reinitialiser le jeu
+            1+1
+        else:
+            self.previous_state = self.environment.previous_states
+            self.state = self.environment.states
         return self.continu
+
+    def show_last_and_best_score(self):
+        if self.environment.current_score > self.final_score:
+            self.final_score = self.environment.current_score
+        if self.final_score != 0:
+            print('\n #Meilleur score: ', self.final_score)
+        print('\n #Dernier score atteint: ', self.environment.current_score)
 
     def getBestAction(self, action):
         # TODO: CODER ET IMPL L'algo d'apprentissage du jeux
@@ -39,7 +48,8 @@ class Agent:
         self.environment.apply(action)
 
     def show(self):
-        self.environment.show();
+        print(' #Score: ' + str(self.environment.current_score) + '\n')
+        self.environment.show()
 
     #TODO: IMPL A CHAQUE ETAT de l'environnement, generer une case aléatoirement parmis ceux qui sont vide.
 
@@ -55,25 +65,24 @@ if __name__ == '__main__':
     #Initialiser le 1ere Etat
 
     i = 0
-    print('Etape: ', i, '\n')
+    print('Etape: ', i, 'avec ', str(len(list_actions_examples)) ,' actions dispo\n')
     agent.show()
-    # Tant que l'environement n'est pas toute c'est case pleine.
+    # Tant que l'environement n'a pas toute ses cases pleines.
     continu = True;
-    while(continu or i <= len(list_actions_examples)):
+
+    """or continu"""
+    while(i <= len(list_actions_examples)-1 ):
         print('ETAPE: ',i+1,'\n')
         #Calul = Enregistre l'action de l'agent
         agent.getBestAction(list_actions_examples[i]);
         # et Changer l'état du jeu
 
-        #Afficher du jeu en cours
-        print('#Score: ...',  '\n')
-        agent.show();
+        #Afficher du jeu en cours et le score
+        agent.show()
         continu = agent.continue_game()
         i += 1
-        print('\n')
-    a = "fzvs"
-    b = a
-    print("a=", a)
-    b = "efzev"
-    print("b when affected from a > ",a)
+        if not continu or i == len(list_actions_examples):
+            agent.show_last_and_best_score()
+
+
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

@@ -24,8 +24,8 @@ UP = 'U'
 DOWN = 'D'
 LEFT = 'L'
 RIGHT = 'R'
-ACTIONS = [UP, DOWN, LEFT, RIGHT];
+ACTIONS = [UP, DOWN, LEFT, RIGHT]
 
 
 
-list_actions_examples = [UP, DOWN, DOWN, RIGHT, LEFT, UP, LEFT];
+list_actions_examples = [UP, UP, UP, DOWN, LEFT, RIGHT, LEFT, DOWN, UP]

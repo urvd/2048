@@ -1,5 +1,7 @@
+from copy import copy
+
 from case_de_tableaux import Case
-from game_methodes import up_action_applied, down_action_applied, left_action_applied, right_action_applied
+from game_methodes import UpActionImpl, DownActionImpl, LeftActionImpl, RightActionImpl
 from game_params import randomXY, ACTIONS, UP, DOWN, RIGHT, LEFT, randomValue
 
 class Environment:
@@ -8,6 +10,7 @@ class Environment:
         self.length = length
         self.height = length
         self.width = length
+        self.current_score = 0
         print('2048 de taille ' + str(length))
         c1_init = Case(randomXY(length), randomXY(length), 2)
         c2_init = Case(randomXY(length), randomXY(length), 2)
@@ -15,9 +18,8 @@ class Environment:
         while(c1_init == c2_init):
             c1_init.set(randomXY(length), randomXY(length), 2)
             c2_init.set(randomXY(length), randomXY(length), 2)
-
-        c1_init.set(1, 3, 2)
-        c2_init.set(3, 1, 2)
+        c1_init.set(0, 0, 2)
+        c2_init.set(3, 0, 2)
         for row in range(self.height):
             for col in range(self.width):
                 if c1_init.x == row and c1_init.y == col:
@@ -45,45 +47,48 @@ class Environment:
                     self.empty_case_states[count] = Case(row, col, self.states[(row, col)])
                     count = count + 1
         #self.empty_case_count = count
-        return count;
+        return count
 
-    # def continue_game(self):
-    #     isPlein = False
-    #     for row in range(self.height):
-    #         for col in range(self.width):
-    #             if self.states[(row, col)].value == 0:
-    #                 return True;
-    #     return False;
-    def _generate_random_new_case(self): #TODO : a améliorer/optimizer
+    def _generate_random_new_case(self):
         newValue = randomValue()
         empty_case_indice = randomXY(len(self.empty_case_states))
         randomX = self.empty_case_states[empty_case_indice].x
         randomY = self.empty_case_states[empty_case_indice].x
 
         self.states[randomX, randomY] = newValue
+    def is_same_as(self, otherstates):
+        for row in range(0,self.length):
+            for col in range(0, self.length):
+                if not self.states[(row, col)] == otherstates[(row, col)]:
+                    return False
+        return True
 
     def apply(self, action):
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
-            self.previous_states = self.states
+            action_applied = None
             # apply_action
             if action == UP:
-                self.states = up_action_applied(self.states, self.height)
+                action_applied = UpActionImpl(current_states=copy(self.states), lenght=self.length)
             elif action == DOWN:
-                self.states = down_action_applied(self.states, self.height)
+                action_applied = DownActionImpl(current_states=copy(self.states), lenght=self.length)
             elif action == LEFT:
-                self.states = left_action_applied(self.states, self.height)
+                action_applied = LeftActionImpl(current_states=copy(self.states), lenght=self.length)
             elif action == RIGHT:
-                self.states = right_action_applied(self.states, self.height)
+                action_applied = RightActionImpl(current_states=copy(self.states), lenght=self.length)
 
-            # generate new case
-            if self.count_empty_cases() != 0: #TODO/ IF STATE DON'T change don't generate
-                self._generate_random_new_case()
+            if self.is_same_as(action_applied.get_states()) is False:
+                self.previous_states = self.states
+                self.states = action_applied.get_states()
+                self.current_score += action_applied.get_score()
+                # generate new case
+                if self.count_empty_cases() != 0:
+                    self._generate_random_new_case()
 
     def show(self):
-        for col in range(self.height):
+        for col in range(self.length):
             res = ''
-            for row in range(self.width):
-                if (row == self.width - 1):
+            for row in range(self.length):
+                if (row == self.length - 1):
                     res += '| ' + str(self.states[(row, col)]) + ' |'
                 else:
                     res += '| ' + str(self.states[(row, col)]) + ' '
