@@ -2,7 +2,7 @@ from copy import copy
 
 from case_de_tableaux import Case
 from game_methodes import UpActionImpl, DownActionImpl, LeftActionImpl, RightActionImpl
-from game_params import randomXY, ACTIONS, UP, DOWN, RIGHT, LEFT, randomValue
+from game_params import randomXY, UP, DOWN, RIGHT, LEFT, randomValue, REWARD_NO_ACTION, REWARD_GAMEOVER
 
 class Environment:
     def __init__(self, length):
@@ -10,7 +10,9 @@ class Environment:
         self.length = length
         self.height = length
         self.width = length
-        self.current_score = 0
+        self.score = 0
+        self._reward = 0
+        self._reward_noaction_overload = 0
         print('2048 de taille ' + str(length))
         c1_init = Case(randomXY(length), randomXY(length), 2)
         c2_init = Case(randomXY(length), randomXY(length), 2)
@@ -40,7 +42,7 @@ class Environment:
         self.empty_case_states = {};
 
     def count_empty_cases(self):
-        count = 0;
+        count = 0
         for row in range(self.height):
             for col in range(self.width):
                 if self.states[(row, col)] == 0:
@@ -62,6 +64,16 @@ class Environment:
                 if not self.states[(row, col)] == otherstates[(row, col)]:
                     return False
         return True
+    def get_current_reward(self):
+        return  self._reward
+
+    def is_current_reward_overloaded(self):
+        if self._reward == REWARD_NO_ACTION:
+            self._reward_noaction_overload += self._reward
+        else:
+            self._reward_noaction_overload = 0
+
+        return self._reward_noaction_overload < REWARD_NO_ACTION
 
     def apply(self, action):
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
@@ -79,10 +91,31 @@ class Environment:
             if self.is_same_as(action_applied.get_states()) is False:
                 self.previous_states = self.states
                 self.states = action_applied.get_states()
-                self.current_score += action_applied.get_score()
+                self.score = action_applied.get_score()
+                self._reward = self.score # reward default
                 # generate new case
                 if self.count_empty_cases() != 0:
                     self._generate_random_new_case()
+                else:
+                    self._reward = REWARD_GAMEOVER
+            else:
+                self._reward = REWARD_NO_ACTION
+
+    def get_state(self):
+        res = ''
+        for col in range(self.length):
+            for row in range(self.length):
+                    res += '(' + str(row) + ',' + str(col) + ')=>' + str(self.states[(row, col)]) + '/\t'
+            res += "\n"
+        return res
+
+    def get_pre_state(self):
+        res = ''
+        for col in range(self.length):
+            for row in range(self.length):
+                res += '(' + str(row) + ',' + str(col) + ')=>' + str(self.previous_states[(row, col)]) + '/\t'
+            res += "\n"
+        return res
 
     def show(self):
         for col in range(self.length):
