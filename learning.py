@@ -11,6 +11,7 @@ class LearningPolicy: #Q-table
         self.discount_factor = discount_factor
         self.state_lenght = (game_lenght * game_lenght) * (2**12)
         self.actions = actions
+        self._chosensActions = None
         self.listOfStates.append(states_sign)
 
         #creer la Qtable de base || recuperer d'un fichier
@@ -28,10 +29,18 @@ class LearningPolicy: #Q-table
             res += f'{state}\t{self.qtable[state]}\n'
         return res
 
-    def best_action(self, state, last_reward_overload_noaction):
+    def get_listedActions(self):
+        list = self._chosensActions
+        return list
+
+    def best_action(self, state, last_reward_overload_noaction, start=False):
+        if start is True:
+            self._chosensActions = ''
+
         action = None
         if last_reward_overload_noaction is True:
             c = generateDefaultAction()
+            self._chosensActions += c + '(Default)'
             return c
 
         if state in self.listOfStates:
@@ -40,12 +49,13 @@ class LearningPolicy: #Q-table
                 if action is None or self.qtable[index][a] >= self.qtable[index][action]:
                     action = a
 
-
+            self._chosensActions += action + '(' + str(copy(self.qtable[index][action])) + ')'
             return action
         else:
             self.listOfStates.append(state)
             self.state_cas += 1
             c = generateDefaultAction()
+            self._chosensActions += c + '(Default)'
             return c
 
     def update(self, previous_state, state, last_action, reward):
@@ -59,4 +69,5 @@ class LearningPolicy: #Q-table
         maxQ = max(self.qtable[self.listOfStates.index(state)].values())
         self.qtable[index][last_action] += self.learning_rate * \
             (reward + self.discount_factor * maxQ - self.qtable[index][last_action])
+
 

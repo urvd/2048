@@ -86,7 +86,7 @@ class UpActionImpl(ActionImpl):
             for y in range(0, self.lenght - 1):
                 if self.current_states[(x, y)] == self.current_states[(x, y + 1)] and not self.current_states[
                                                                                               (x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x, y + 1)] = 0
                     self.score += self.current_states[(x, y)]
         # print(" > merger\n")
@@ -110,7 +110,7 @@ class DownActionImpl(ActionImpl):
                 if self.current_states[(x, y)] == self.current_states[(x, y - 1)] \
                         and not self.current_states[(x, y)] == 0:
 
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x, y - 1)] = 0
                     self.score += self.current_states[(x, y)]
         # print(" > merger\n")
@@ -133,7 +133,7 @@ class LeftActionImpl(ActionImpl):
             for x in range(0, self.lenght - 1):
                 if self.current_states[(x, y)] == self.current_states[(x + 1, y)] \
                         and not self.current_states[(x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x + 1, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x + 1, y)] = 0
                     self.score += self.current_states[(x, y)]
 
@@ -156,7 +156,7 @@ class RightActionImpl(ActionImpl):
             for x in reversed(range(1, self.lenght)):
                 if self.current_states[(x, y)] == self.current_states[(x - 1, y)] \
                         and not self.current_states[(x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x - 1, y)] = 0
                     self.score += self.current_states[(x, y)]
         # print(" > merger\n")

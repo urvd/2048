@@ -6,10 +6,14 @@ from game_params import randomXY, UP, DOWN, RIGHT, LEFT, randomValue, REWARD_NO_
 
 class Environment:
     def __init__(self, length):
-        self.states = {}
         self.length = length
-        self.height = length
-        self.width = length
+        self.set()
+
+    def reset(self):
+        self.set(self.length)
+
+    def set(self, length=4):
+        self.states = {}
         self.score = 0
         self._reward = 0
         self._reward_noaction_overload = 0
@@ -17,34 +21,33 @@ class Environment:
         c1_init = Case(randomXY(length), randomXY(length), 2)
         c2_init = Case(randomXY(length), randomXY(length), 2)
 
-        while(c1_init == c2_init):
+        while (c1_init == c2_init):
             c1_init.set(randomXY(length), randomXY(length), 2)
             c2_init.set(randomXY(length), randomXY(length), 2)
         c1_init.set(0, 0, 2)
         c2_init.set(3, 0, 2)
-        for row in range(self.height):
-            for col in range(self.width):
+        for row in range(self.length):
+            for col in range(self.length):
                 if c1_init.x == row and c1_init.y == col:
                     self.states[(row, col)] = c1_init.value
-                    print('c1 generated: ' + c1_init.toString())
 
                 elif c2_init.x == row and c2_init.y == col:
                     self.states[(row, col)] = c2_init.value
-                    print('c2 generated ' + c2_init.toString())
                 else:
                     self.states[(row, col)] = 0
 
-        #self.starting_point = self.states
-        #self.new_states = None
+        print('c1 generated: ' + c1_init.toString())
+        print('c2 generated ' + c2_init.toString())
+
         self.previous_states = {}
 
-        self.empty_case_count = 0;
-        self.empty_case_states = {};
+        self.empty_case_count = 0
+        self.empty_case_states = {}
 
     def count_empty_cases(self):
         count = 0
-        for row in range(self.height):
-            for col in range(self.width):
+        for row in range(self.length):
+            for col in range(self.length):
                 if self.states[(row, col)] == 0:
                     self.empty_case_states[count] = Case(row, col, self.states[(row, col)])
                     count = count + 1
@@ -73,7 +76,7 @@ class Environment:
         else:
             self._reward_noaction_overload = 0
 
-        return self._reward_noaction_overload < REWARD_NO_ACTION
+        return self._reward_noaction_overload > REWARD_NO_ACTION
 
     def apply(self, action):
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
