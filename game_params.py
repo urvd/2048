@@ -1,4 +1,11 @@
 import random
+
+# learning param
+DEFAULT_LEARNING_RATE = 0.875
+DEFAULT_DISCOUNT_FACTOR = 0.9
+
+IA_NB_TOURS = 6
+
 #game state schema
 '''    0 1 2 3
      0 | | | |
@@ -20,10 +27,21 @@ GAME_SCORE = 0
 REWARD_STUCK = -GAME_SCORE
 REWARD_CONTINUE = GAME_SCORE
 
-REWARD_GOAL = 60
+REWARD_GOAL = 2048
+REWARD1024 = 1024
+REWARD512 = 512
+REWARD256 = 256
+REWARD128 = 128
+REWARD64 = 64
+REWARD32 = 32
+REWARD16 = 16
+REWARD8 = 8
+REWARD4 = 4
+REWARD2 = 2
+
 REWARD_DEFAULT = 1
-REWARD_GAMEOVER = -60
-REWARD_NO_ACTION = -5
+REWARD_GAMEOVER = -100000
+REWARD_NO_ACTION = -1
 
 
 #Generer Aleatoirement
@@ -38,9 +56,7 @@ def randomXY(lenght):
 def generateDefaultAction():
     return random.choice(ACTIONS)
 
-#learning param
-DEFAULT_LEARNING_RATE = 0.875;
-DEFAULT_DISCOUNT_FACTOR = 0.5;
+
 
 
 

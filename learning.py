@@ -1,6 +1,6 @@
 import math
 from copy import copy
-from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT
+from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT, ACTIONS
 
 
 class LearningPolicy: #Q-table
@@ -12,6 +12,7 @@ class LearningPolicy: #Q-table
         self.state_lenght = (game_lenght * game_lenght) * (2**12)
         self.actions = actions
         self._chosensActions = None
+        self.nb_successif_overload_action = 0
         self.listOfStates.append(states_sign)
 
         #creer la Qtable de base || recuperer d'un fichier
@@ -39,10 +40,14 @@ class LearningPolicy: #Q-table
 
         action = None
         if last_reward_overload_noaction is True:
+            self.nb_successif_overload_action += 1
             c = generateDefaultAction()
             self._chosensActions += c + '(Default)'
-            return c
-
+            if self.nb_successif_overload_action == 2:
+                return ACTIONS[self.nb_successif_overload_action-1]
+            return ACTIONS[0]
+        else:
+            self.nb_successif_overload_action = 0
         if state in self.listOfStates:
             index = self.listOfStates.index(state)
             for a in self.qtable[index]:

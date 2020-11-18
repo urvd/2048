@@ -62,6 +62,7 @@ class ActionImpl:
         self.lenght = lenght
         self.score = 0
         self.apply_action()
+        self.no_mergable_case = True
     def get_states(self):
         return self.current_states
     def get_score(self):
@@ -89,6 +90,7 @@ class UpActionImpl(ActionImpl):
                     self.current_states[(x, y)] *= 2
                     self.current_states[(x, y + 1)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
 
@@ -113,6 +115,7 @@ class DownActionImpl(ActionImpl):
                     self.current_states[(x, y)] *= 2
                     self.current_states[(x, y - 1)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
 
@@ -136,6 +139,7 @@ class LeftActionImpl(ActionImpl):
                     self.current_states[(x, y)] *= 2
                     self.current_states[(x + 1, y)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
 
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
@@ -159,6 +163,7 @@ class RightActionImpl(ActionImpl):
                     self.current_states[(x, y)] *= 2
                     self.current_states[(x - 1, y)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
     def _decale_states(self):
