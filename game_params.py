@@ -4,7 +4,8 @@ import random
 DEFAULT_LEARNING_RATE = 0.875
 DEFAULT_DISCOUNT_FACTOR = 0.9
 
-IA_NB_TOURS = 6
+GAME_LENGHT = 3
+IA_NB_TOURS = 5
 
 #game state schema
 '''    0 1 2 3
@@ -23,9 +24,6 @@ RIGHT = 'R'
 ACTIONS = ['U', 'D', 'L', 'R']
 
 #game reward
-GAME_SCORE = 0
-REWARD_STUCK = -GAME_SCORE
-REWARD_CONTINUE = GAME_SCORE
 
 REWARD_GOAL = 2048
 REWARD1024 = 1024
@@ -39,9 +37,9 @@ REWARD8 = 8
 REWARD4 = 4
 REWARD2 = 2
 
-REWARD_DEFAULT = 1
+REWARD_DEFAULT = 1 # score state
 REWARD_GAMEOVER = -100000
-REWARD_NO_ACTION = -1
+REWARD_NO_EFFECT = -1
 
 
 #Generer Aleatoirement
@@ -59,7 +57,4 @@ def generateDefaultAction():
 
 
 
-
-
-
-list_actions_examples = [UP, UP, UP, DOWN, LEFT, RIGHT, LEFT, DOWN, UP]
+# list_actions_examples = [UP, UP, UP, DOWN, LEFT, RIGHT, LEFT, DOWN, UP]

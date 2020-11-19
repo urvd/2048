@@ -9,7 +9,7 @@ class LearningPolicy: #Q-table
         self.qtable = {}
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
-        self.state_lenght = (game_lenght * game_lenght) * (2**12)
+        self.state_lenght = (game_lenght * game_lenght) * (2**11)
         self.actions = actions
         self._chosensActions = None
         self.nb_successif_overload_action = 0
@@ -39,28 +39,29 @@ class LearningPolicy: #Q-table
             self._chosensActions = ''
 
         action = None
-        if last_reward_overload_noaction is True:
-            self.nb_successif_overload_action += 1
-            c = generateDefaultAction()
-            self._chosensActions += c + '(Default)'
-            if self.nb_successif_overload_action == 2:
-                return ACTIONS[self.nb_successif_overload_action-1]
-            return ACTIONS[0]
-        else:
-            self.nb_successif_overload_action = 0
+
         if state in self.listOfStates:
+            if last_reward_overload_noaction is True:
+                self.nb_successif_overload_action += 1
+                c = generateDefaultAction()
+                self._chosensActions += c + '(*) '
+                # if self.nb_successif_overload_action == 2:
+                #     return ACTIONS[self.nb_successif_overload_action-1]
+                # return ACTIONS[0]'
+                return c
+
             index = self.listOfStates.index(state)
             for a in self.qtable[index]:
                 if action is None or self.qtable[index][a] >= self.qtable[index][action]:
                     action = a
 
-            self._chosensActions += action + '(' + str(copy(self.qtable[index][action])) + ')'
+            self._chosensActions += action + '(' + str(copy(self.qtable[index][action])) + ') '
             return action
         else:
             self.listOfStates.append(state)
             self.state_cas += 1
             c = generateDefaultAction()
-            self._chosensActions += c + '(Default)'
+            self._chosensActions += c + '(*) '
             return c
 
     def update(self, previous_state, state, last_action, reward):

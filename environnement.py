@@ -52,7 +52,7 @@ class Environment:
                 if self.states[(row, col)] == 0:
                     self.empty_case_states[count] = Case(row, col, self.states[(row, col)])
                     count = count + 1
-        #self.empty_case_count = count
+
         return count
 
     def count_empty_casesOf(self, state):
@@ -63,70 +63,72 @@ class Environment:
                     count = count + 1
         return count
 
-    def _generate_random_new_case(self, bncase = 2):
+    def get_current_reward(self):
+        return  self._reward
+
+    def is_current_reward_overloaded(self):
+        if self._reward == REWARD_NO_EFFECT:
+            self._reward_noaction_overload = True
+        else:
+            self._reward_noaction_overload = False
+
+        return self._reward_noaction_overload
+
+    def _generate_random_new_case(self):
         newValue = randomValue()
         empty_case_indice = randomXY(len(self.empty_case_states))
         randomX = self.empty_case_states[empty_case_indice].x
         randomY = self.empty_case_states[empty_case_indice].y
 
         self.states[randomX, randomY] = newValue
+
     def is_same_as(self, otherstates):
         for row in range(0,self.length):
             for col in range(0, self.length):
                 if not self.states[(row, col)] == otherstates[(row, col)]:
                     return False
         return True
-    def get_current_reward(self):
-        return  self._reward
 
-    def is_current_reward_overloaded(self):
-        if self._reward == REWARD_NO_ACTION:
-            self._reward_noaction_overload += self._reward
-        else:
-            self._reward_noaction_overload = 0
-
-        return self._reward_noaction_overload <= REWARD_NO_ACTION
-
-    def calcul_reward_attribution(self):
-        max = 0
-        fixedmax = max
-        count = 0
-        for row in range(0, self.length):
-            for col in range(0, self.length):
-
-                if self.states[(row, col)] == REWARD_GOAL and max < REWARD_GOAL:
-                    max = REWARD_GOAL
-                if self.states[(row, col)] == REWARD1024 and max < REWARD1024:
-                    max = REWARD1024
-                if self.states[(row, col)] == REWARD512 and max < REWARD512:
-                    max = REWARD512
-                if self.states[(row, col)] == REWARD256 and max < REWARD256:
-                    max = REWARD256
-                if self.states[(row, col)] == REWARD128 and max < REWARD128:
-                    max = REWARD128
-                if self.states[(row, col)] == REWARD64 and max < REWARD64:
-                    max = REWARD64
-                if self.states[(row, col)] == REWARD32 and max < REWARD32:
-                    max = REWARD32
-                if self.states[(row, col)] == REWARD16 and max < REWARD16:
-                    max = REWARD16
-                if self.states[(row, col)] == REWARD8 and max < REWARD8:
-                    max = REWARD8
-                if self.states[(row, col)] == REWARD4 and max < REWARD4:
-                    max = REWARD4
-                if self.states[(row, col)] == REWARD2 and max < REWARD2:
-                    max = REWARD2
-
-                if max is not fixedmax:
-                    fixedmax = max
-                    count = 1
-                else:
-                    count += 1
-
-        return [max, count]
-
+    # def calcul_reward_attribution(self):
+    #     max = 0
+    #     fixedmax = max
+    #     count = 0
+    #     for row in range(0, self.length):
+    #         for col in range(0, self.length):
+    #
+    #             if self.states[(row, col)] == REWARD_GOAL and max < REWARD_GOAL:
+    #                 max = REWARD_GOAL
+    #             if self.states[(row, col)] == REWARD1024 and max < REWARD1024:
+    #                 max = REWARD1024
+    #             if self.states[(row, col)] == REWARD512 and max < REWARD512:
+    #                 max = REWARD512
+    #             if self.states[(row, col)] == REWARD256 and max < REWARD256:
+    #                 max = REWARD256
+    #             if self.states[(row, col)] == REWARD128 and max < REWARD128:
+    #                 max = REWARD128
+    #             if self.states[(row, col)] == REWARD64 and max < REWARD64:
+    #                 max = REWARD64
+    #             if self.states[(row, col)] == REWARD32 and max < REWARD32:
+    #                 max = REWARD32
+    #             if self.states[(row, col)] == REWARD16 and max < REWARD16:
+    #                 max = REWARD16
+    #             if self.states[(row, col)] == REWARD8 and max < REWARD8:
+    #                 max = REWARD8
+    #             if self.states[(row, col)] == REWARD4 and max < REWARD4:
+    #                 max = REWARD4
+    #             if self.states[(row, col)] == REWARD2 and max < REWARD2:
+    #                 max = REWARD2
+    #
+    #             if max is not fixedmax:
+    #                 fixedmax = max
+    #                 count = 1
+    #             else:
+    #                 count += 1
+    #
+    #     return [max, count]
 
     def apply(self, action):
+        self.previous_states = self.states
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
             action_applied = None
             # apply_action
@@ -142,21 +144,22 @@ class Environment:
 
 
             if self.is_same_as(action_applied.get_states()) is False:
-                self.previous_states = self.states
+
                 self.states = action_applied.get_states()
                 self.score = action_applied.get_score()
+
                 # generate new case
-                if self.count_empty_cases() != 0:
+                empty_cases = self.count_empty_cases()
+                if empty_cases != 0:
                     self._generate_random_new_case()
                     if self.count_empty_cases() == 0:
                         self._reward = REWARD_GAMEOVER
 
                 if (self._reward != REWARD_GAMEOVER):
-                    calcul = self.calcul_reward_attribution()
-                    # reward default = score de case merger + case la plus grande * nb de apparition de la case max
-                    self._reward = self.score + calcul[0] * calcul[1]
+                    # reward default = score des case merger.
+                    self._reward = self.score
             else:
-                self._reward = REWARD_NO_ACTION
+                self._reward = REWARD_NO_EFFECT
 
 
 

@@ -2,7 +2,7 @@ import random
 from copy import copy
 
 from environnement import Environment
-from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS
+from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT
 from learning import LearningPolicy
 
 class Summary:
@@ -21,8 +21,10 @@ class Summary:
     def show(self):
         res = ''
         for i in range(0, self.nb_tours):
-            res = 'tours: '+ str(i+1) + '. Joué en '+ str(self.etapes[i]) + '. Score: '+ str(self.scores[i]) + '.\n'\
-            'Enchainement d\'actions: '+ self.chain_actions[i] + '\n'
+            res += 'tours: '+ str(i+1) + '. Joué en '+ str(self.etapes[i]) + ' étapes. Score: '+ str(self.scores[i]) + '.\n'\
+            'Enchainement d\'actions: '+ self.chain_actions[i] + '\n\n'
+
+        return  res
 
 
 class Agent:
@@ -42,7 +44,7 @@ class Agent:
         self.continu = False
 
     def continue_game(self):
-        return self.continu
+        return self.continu and self.environment.get_current_reward() != REWARD_GAMEOVER
 
     def show_last_and_best_score(self):
         if self.state_score > self.final_score:
@@ -82,12 +84,18 @@ class Agent:
                                         state=self.environment.get_state(), last_action=self.last_action,\
                                         reward=self.environment.get_current_reward())
 
+
+    #TODO: resoudre bug qui s'affiche une fois de temps en temps
+    #TODO: Optimisation IA => amélioré la diversité des appels d'action
+    #TODO: Optimisation IA => adapter avec réseaux de neurones.
+
     #TODO: ADAPATER LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
+
 
 if __name__ == '__main__':
 
     #Initialiser l'environment
-    plateaux = Environment(4)
+    plateaux = Environment(GAME_LENGHT)
     # Initialiser l'agent
     agent = Agent(plateaux)
 

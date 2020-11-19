@@ -85,8 +85,8 @@ class UpActionImpl(ActionImpl):
     def _merge_states(self):
         for x in range(0, self.lenght):
             for y in range(0, self.lenght - 1):
-                if self.current_states[(x, y)] == self.current_states[(x, y + 1)] and not self.current_states[
-                                                                                              (x, y)] == 0:
+                if self.current_states[(x, y)] == self.current_states[(x, y + 1)] \
+                        and not self.current_states[(x, y)] == 0:
                     self.current_states[(x, y)] *= 2
                     self.current_states[(x, y + 1)] = 0
                     self.score += self.current_states[(x, y)]
