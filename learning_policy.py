@@ -1,4 +1,6 @@
 import math
+from sklearn.neural_network import MLPRegressor
+import numpy as np
 from copy import copy
 from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT, ACTIONS
 

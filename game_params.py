@@ -4,8 +4,9 @@ import random
 DEFAULT_LEARNING_RATE = 0.875
 DEFAULT_DISCOUNT_FACTOR = 0.9
 
-GAME_LENGHT = 3
+GAME_LENGHT = 4
 IA_NB_TOURS = 5
+MODE_APPRENTISSAGE = True
 
 #game state schema
 '''    0 1 2 3
