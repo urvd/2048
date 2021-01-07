@@ -1,88 +1,80 @@
 import random
+from copy import copy
 
+from agent import Agent
 from environnement import Environment
-from game_params import ACTIONS, list_actions_examples
+from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE
+from learning_policy import LearningPolicy
 
-GAME_PROCESS = 'GAME_PROCESS' #  VERIFIER SI l\'état du jeu est en cours et Addtion du score
-GAME_OVER = 'GAME_OVER' # VERIFIER SI  toutes les case sont remplit et recupère son score.
-GAME_SUCCES = 'GAME_SUCCES' # VERIFIER QUAND  une case de l'etat de l'environemment  contient = 2048
-                            # alors l'environnement s'arrete,  et recupère son score min
-
-REWARD_GOAL = GAME_SUCCES #Si une case de l'etat de l'environemment est = 2048
-REWARD_DEFAULT = GAME_PROCESS# Methode qui met à jours l'état avec les valeurs des cases et le score
-REWARD_STUCK = GAME_OVER
-#TODO: CODER et IMPL LES RECOMPENSES
-
-
-class Agent:
-    def __init__(self, environment):
-        self.environment = environment
-        self.state = environment.states
-        #
-        self.previous_state = self.environment.previous_states
-        ##self.policy = Policy(environment.states.keys(), ACTIONS)
-        self.final_score = 0
-        self.continu = False
-
-    def continue_game(self):
-        self.continu = self.environment.count_empty_cases() != 0
-        if self.continu == False :
-            #TODO : reinitialiser le jeu
-            1+1
-        else:
-            self.previous_state = self.environment.previous_states
-            self.state = self.environment.states
-        return self.continu
-
-    def show_last_and_best_score(self):
-        if self.environment.current_score > self.final_score:
-            self.final_score = self.environment.current_score
-        if self.final_score != 0:
-            print('\n #Meilleur score: ', self.final_score)
-        print('\n #Dernier score atteint: ', self.environment.current_score)
-
-    def getBestAction(self, action):
-        # TODO: CODER ET IMPL L'algo d'apprentissage du jeux
-        #Calcul de la meilleur actions à réaliser selon l'état en cours du jeux de l'environnement
-        print('#Action: ', action, '\n')
-        self.environment.apply(action)
-
+class Summary:
+    def __init__(self, tours):
+        self.nb_tours = tours
+        self.etapes = []
+        self.scores = []
+        self.chain_actions = []
+        self.current_tours = 0
+        self.current_etape = 0
+    def add(self, score, chain_actions):
+        # i; etape  score actions
+        self.etapes.append(self.current_etape)
+        self.scores.append(score)
+        self.chain_actions.append(chain_actions)
     def show(self):
-        print(' #Score: ' + str(self.environment.current_score) + '\n')
-        self.environment.show()
+        res = ''
+        for i in range(0, self.nb_tours):
+            res += 'tours: '+ str(i+1) + '. Joué en '+ str(self.etapes[i]) + ' étapes. Score: '+ str(self.scores[i]) + '.\n'\
+            'Enchainement d\'actions: '+ self.chain_actions[i] + '\n\n'
 
-    #TODO: IMPL A CHAQUE ETAT de l'environnement, generer une case aléatoirement parmis ceux qui sont vide.
+        return  res
+
+
+
+
+
+
+
+    #TODO: resoudre bug qui s'affiche une fois de temps en temps
+    #TODO: Optimisation IA => amélioré la diversité des appels d'action
+    #TODO: Optimisation IA => adapter avec réseaux de neurones.
 
     #TODO: ADAPATER LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
+
 
 if __name__ == '__main__':
 
     #Initialiser l'environment
-    plateaux = Environment(4)
+    plateaux = Environment(GAME_LENGHT)
     # Initialiser l'agent
     agent = Agent(plateaux)
 
-    #Initialiser le 1ere Etat
+    nbtours = IA_NB_TOURS
+    summary = Summary(nbtours)
+    summary.current_tours = 0
 
-    i = 0
-    print('Etape: ', i, 'avec ', str(len(list_actions_examples)) ,' actions dispo\n')
-    agent.show()
-    # Tant que l'environement n'a pas toute ses cases pleines.
-    continu = True;
+    while (summary.current_tours < nbtours):
+        #Initialiser le 1ere Etat
+        summary.current_etape = 0
+        agent.show(init=True)
+        # Tant que l'environement n'a pas toute ses cases pleines.
+        continu = True
 
-    """or continu"""
-    while(i <= len(list_actions_examples)-1 ):
-        print('ETAPE: ',i+1,'\n')
-        #Calul = Enregistre l'action de l'agent
-        agent.getBestAction(list_actions_examples[i]);
-        # et Changer l'état du jeu
+        while(continu):
+            print("Tours numero : " + str(summary.current_tours + 1))
+            print('ETAPE: ', summary.current_etape + 1, '\n')
+            #Calul = Enregistre l'action de l'agent
+            # et Changer l'état du jeu
+            agent.do()
+            #Afficher du jeu en cours et le score et met a jours la table d'apprentissage
+            agent.show()
+            continu = agent.continue_game()
+            if not continu:
+                summary.add(agent.state_score, agent.getListActions())
+                agent.show_last_and_best_score()
+                agent.reset()
+            summary.current_etape += 1
 
-        #Afficher du jeu en cours et le score
-        agent.show()
-        continu = agent.continue_game()
-        i += 1
-        if not continu or i == len(list_actions_examples):
-            agent.show_last_and_best_score()
+        summary.current_tours += 1
 
+    print(summary.show())
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

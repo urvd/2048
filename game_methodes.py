@@ -62,6 +62,7 @@ class ActionImpl:
         self.lenght = lenght
         self.score = 0
         self.apply_action()
+        self.no_mergable_case = True
     def get_states(self):
         return self.current_states
     def get_score(self):
@@ -84,11 +85,12 @@ class UpActionImpl(ActionImpl):
     def _merge_states(self):
         for x in range(0, self.lenght):
             for y in range(0, self.lenght - 1):
-                if self.current_states[(x, y)] == self.current_states[(x, y + 1)] and not self.current_states[
-                                                                                              (x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                if self.current_states[(x, y)] == self.current_states[(x, y + 1)] \
+                        and not self.current_states[(x, y)] == 0:
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x, y + 1)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
 
@@ -110,9 +112,10 @@ class DownActionImpl(ActionImpl):
                 if self.current_states[(x, y)] == self.current_states[(x, y - 1)] \
                         and not self.current_states[(x, y)] == 0:
 
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x, y - 1)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
 
@@ -133,9 +136,10 @@ class LeftActionImpl(ActionImpl):
             for x in range(0, self.lenght - 1):
                 if self.current_states[(x, y)] == self.current_states[(x + 1, y)] \
                         and not self.current_states[(x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x + 1, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x + 1, y)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
 
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
@@ -156,9 +160,10 @@ class RightActionImpl(ActionImpl):
             for x in reversed(range(1, self.lenght)):
                 if self.current_states[(x, y)] == self.current_states[(x - 1, y)] \
                         and not self.current_states[(x, y)] == 0:
-                    self.current_states[(x, y)] *= self.current_states[(x, y)]
+                    self.current_states[(x, y)] *= 2
                     self.current_states[(x - 1, y)] = 0
                     self.score += self.current_states[(x, y)]
+                    self.no_mergable_case = False
         # print(" > merger\n")
         # show(self.current_states, self.lenght)
     def _decale_states(self):
