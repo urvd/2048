@@ -1,10 +1,13 @@
 import random
 from copy import copy
+import time
+from arcade import Window, run, color, set_background_color, draw_point, draw_text, draw_rectangle_filled, draw_line, \
+    start_render, key
 
 from agent import Agent
 from environnement import Environment
 from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE
-from learning_policy import LearningPolicy
+
 
 class Summary:
     def __init__(self, tours):
@@ -28,53 +31,124 @@ class Summary:
         return  res
 
 
-
-
-
-
+def TraduireDirection(self, action):
+        if action == 'U':
+            return 'Haut'
+        if action == 'D':
+            return 'Bas'
+        if action == 'L':
+            return 'Gauche'
+        if action == 'D':
+            return 'Droite'
 
     #TODO: resoudre bug qui s'affiche une fois de temps en temps
     #TODO: Optimisation IA => amélioré la diversité des appels d'action
     #TODO: Optimisation IA => adapter avec réseaux de neurones.
 
-    #TODO: ADAPATER LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
+    #TODO: Retoucher LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
 
+# Screen
+SCREEN_WIDTH = 800
+SCREEN_HEIGHT = 700
+SCREEN_TITLE = "-- 2048 --"
+
+# Text
+# TEXT_TOURS_XDIM = TEXT_ETAPE_XDIM = 50
+# TEXT_TOURS_YDIM = TEXT_FINAL_YDIM = 750
+# TEXT_ETAPE_YDIM = TEXT_CURRENT_XDIM = 730
+
+class Game2048Window(Window):
+    def __init__(self, agent):
+        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        self.agent = agent
+        self.state = self.agent.getState()
+        self.summary = Summary(IA_NB_TOURS)
+        # ,self.continu = True
+        self.summary.current_etape = 0
+        self.summary.current_tours = 0
+        self.length = 4
+
+    def setup(self):
+        self._render_game_core()
+
+    def _text(self, start_x, start_y, text):
+        draw_point(start_x, start_y, color.BLUE, 5)
+        draw_text(text, start_x + 15, start_y, color.BLACK, 12)
+
+
+
+
+    def _render_game_core(self):
+        self._text(50, 600, "Tours: " + str(self.summary.current_tours + 1))
+        self._text(50, 570, "Etape: " + str(self.summary.current_etape + 1))
+        self._text(480, 600, "Final score: " + str(self.agent.final_score))
+        self._text(480, 570, "Current score: " + str(self.agent.state_score))
+
+        if agent.last_action is not None:
+            action = self.agent.last_action
+            actionDirection = ''
+            if action == 'U':
+                actionDirection = 'Haut'
+            if action == 'D':
+                actionDirection = 'Bas'
+            if action == 'L':
+                actionDirection = 'Gauche'
+            if action == 'R':
+                actionDirection = 'Droite'
+
+            draw_text("Action: " + actionDirection, 550, 450, color.BLACK, 16)
+
+        for x in range(100, (self.length + 2)*100, 100):
+            for y in range(100, (self.length + 2)*100, 100):
+                if x != 500 and y != 500:
+                    self._render_grille_case(x, y)
+        # dernier ligne vertical: | && horizontal: --
+        draw_line(500, 100, 500, 500, color.WHITE, 2)
+        draw_line(100, 500, 500, 500, color.WHITE, 2)
+
+    def _render_grille_case(self, x, y):
+        # vertical: |
+        draw_line(x, y, x, y + 100, color.WHITE, 2)
+        # horizontal: --
+        draw_line(x, y, x + 100, y, color.WHITE, 2)
+
+        draw_rectangle_filled(x+50, y+50, 100, 100, color.GOLD)
+
+        if self.state[((x/100) - 1, (y/100) - 1)] != 0:
+            draw_text(str(self.state[((x/100) - 1, (y/100) - 1)]), x + 50, y + 50, color.BLACK, 18)
+
+    def on_draw(self):
+        start_render()
+        draw_rectangle_filled(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, color.GRAY)
+        self._render_game_core()
+
+    def on_update(self, delta_time):
+        if self.summary.current_etape == 0:
+            self.agent.do(init=True)
+        else:
+            self.agent.do()
+        time.sleep(0.5)
+        self.state = self.agent.getState()
+
+        continu = agent.continue_game()
+        if not continu:
+            self.summary.add(agent.state_score, agent.getListActions())
+            self.summary.current_etape = 0
+            self.summary.current_tours += 1
+            agent.reset()
+        else:
+            self.summary.current_etape += 1
+    def on_key_press(self, key, modifiers):
+        if not MODE_APPRENTISSAGE:
+            if key == key.U or key == key.D or key == key.L or key == key.R:
+                self.agent.last_action = key
 
 if __name__ == '__main__':
-
-    #Initialiser l'environment
+    # New
     plateaux = Environment(GAME_LENGHT)
-    # Initialiser l'agent
     agent = Agent(plateaux)
-
-    nbtours = IA_NB_TOURS
-    summary = Summary(nbtours)
-    summary.current_tours = 0
-
-    while (summary.current_tours < nbtours):
-        #Initialiser le 1ere Etat
-        summary.current_etape = 0
-        agent.show(init=True)
-        # Tant que l'environement n'a pas toute ses cases pleines.
-        continu = True
-
-        while(continu):
-            print("Tours numero : " + str(summary.current_tours + 1))
-            print('ETAPE: ', summary.current_etape + 1, '\n')
-            #Calul = Enregistre l'action de l'agent
-            # et Changer l'état du jeu
-            agent.do()
-            #Afficher du jeu en cours et le score et met a jours la table d'apprentissage
-            agent.show()
-            continu = agent.continue_game()
-            if not continu:
-                summary.add(agent.state_score, agent.getListActions())
-                agent.show_last_and_best_score()
-                agent.reset()
-            summary.current_etape += 1
-
-        summary.current_tours += 1
-
-    print(summary.show())
+    window = Game2048Window(agent)
+    window.setup()
+    run()
 
 # See PyCharm help at https://www.jetbrains.com/help/pycharm/

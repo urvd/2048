@@ -17,23 +17,19 @@ class Agent:
         self.state_score = 0
         self.final_score = 0
         self.continu = False
-
+    def getState(self):
+        return self.environment.states
     def continue_game(self):
         return self.continu and self.environment.get_current_reward() != REWARD_GAMEOVER
 
-    def show_last_and_best_score(self):
+    def reset(self):
         if self.state_score > self.final_score:
             self.final_score = self.state_score
-        if self.final_score != 0:
-            print('\n #Meilleur score: ', self.final_score)
-        print('\n #Dernier score atteint: ', self.state_score)
-
         self.state_score = 0
         self.last_action = None
-    def reset(self):
-         self.environment.reset()
+        self.environment.reset()
 
-    def do(self):
+    def do(self, init=False):
         # TODO: CODER ET IMPL L'algo d'apprentissage du jeux
         #Calcul de la meilleur actions à réaliser selon l'état en cours du jeux de l'environnement
         if MODE_APPRENTISSAGE:
@@ -44,22 +40,17 @@ class Agent:
             print('#Action: ', self.last_action, '\n')
             self.environment.apply(self.last_action)
         else:
-            action = input("#Action: RENSEIGNER UNE DIRECTION: \t")
-            self.environment.apply(action)
+            self.environment.apply(self.last_action)
         self.previous_state = self.environment.previous_states
         self.state = self.environment.states
         self.state_score += self.environment.score
-
-    def getListActions(self):
-        return self.learning_policy.get_listedActions()
-
-    def show(self, init=False):
-        print(' #Score: ' + str(self.state_score) + '\n')
-        self.environment.show()
         self.continu = self.environment.get_current_reward != REWARD_GAMEOVER
+
         if MODE_APPRENTISSAGE:
             if not init:
                 self.start = False
                 self.learning_policy.update(previous_state=self.environment.get_pre_state(), \
                                             state=self.environment.get_state(), last_action=self.last_action, \
                                             reward=self.environment.get_current_reward())
+    def getListActions(self):
+        return self.learning_policy.get_listedActions()
