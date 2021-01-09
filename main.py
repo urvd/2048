@@ -6,7 +6,8 @@ from arcade import Window, run, color, set_background_color, draw_point, draw_te
 
 from agent import Agent
 from environnement import Environment
-from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE
+from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE, \
+    RIGHT, DOWN, LEFT, UP
 
 
 class Summary:
@@ -46,6 +47,7 @@ def TraduireDirection(self, action):
     #TODO: Optimisation IA => adapter avec réseaux de neurones.
 
     #TODO: Retoucher LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
+    # Corriger bug traitement/affichage 2048
 
 # Screen
 SCREEN_WIDTH = 800
@@ -67,6 +69,7 @@ class Game2048Window(Window):
         self.summary.current_etape = 0
         self.summary.current_tours = 0
         self.length = 4
+        self.key_pressed = None
 
     def setup(self):
         self._render_game_core()
@@ -115,7 +118,7 @@ class Game2048Window(Window):
         draw_rectangle_filled(x+50, y+50, 100, 100, color.GOLD)
 
         if self.state[((x/100) - 1, (y/100) - 1)] != 0:
-            draw_text(str(self.state[((x/100) - 1, (y/100) - 1)]), x + 50, y + 50, color.BLACK, 18)
+            draw_text(str(self.state[((x/100) - 1, (y/100) - 1)]), x + 48, y + 48, color.BLACK, 18)
 
     def on_draw(self):
         start_render()
@@ -123,10 +126,12 @@ class Game2048Window(Window):
         self._render_game_core()
 
     def on_update(self, delta_time):
-        if self.summary.current_etape == 0:
-            self.agent.do(init=True)
-        else:
-            self.agent.do()
+        if MODE_APPRENTISSAGE:
+            if self.summary.current_etape == 0:
+                self.agent.do(init=True)
+            else:
+                self.agent.do()
+
         time.sleep(0.5)
         self.state = self.agent.getState()
 
@@ -137,11 +142,28 @@ class Game2048Window(Window):
             self.summary.current_tours += 1
             agent.reset()
         else:
-            self.summary.current_etape += 1
-    def on_key_press(self, key, modifiers):
+            if MODE_APPRENTISSAGE:
+                self.summary.current_etape += 1
+
+    def on_key_press(self, k, modifiers):
         if not MODE_APPRENTISSAGE:
-            if key == key.U or key == key.D or key == key.L or key == key.R:
-                self.agent.last_action = key
+
+            if k == key.UP:
+                self.key_pressed = UP
+                self.agent.do(keyName=self.key_pressed)
+                self.summary.current_etape += 1
+            if k == key.DOWN:
+                self.key_pressed = DOWN
+                self.agent.do(keyName=self.key_pressed)
+                self.summary.current_etape += 1
+            if k == key.LEFT:
+                self.key_pressed = LEFT
+                self.agent.do(keyName=self.key_pressed)
+                self.summary.current_etape += 1
+            if k == key.RIGHT:
+                self.key_pressed = RIGHT
+                self.agent.do(keyName=self.key_pressed)
+                self.summary.current_etape += 1
 
 if __name__ == '__main__':
     # New
