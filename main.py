@@ -47,7 +47,8 @@ def TraduireDirection(self, action):
     #TODO: Optimisation IA => adapter avec réseaux de neurones.
 
     #TODO: Retoucher LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
-    # Corriger bug traitement/affichage 2048
+    # Corriger bug fuite de donnée
+
 
 # Screen
 SCREEN_WIDTH = 800

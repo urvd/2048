@@ -5,28 +5,16 @@ from copy import copy
 
 from case_de_tableaux import Case
 
-# def show(states, len):
-#     for col in range(len):
-#         res = ''
-#         for row in range(len):
-#             if (row == len - 1):
-#                 res += '| ' + str(states[(row, col)]) + ' |'
-#             else:
-#                 res += '| ' + str(states[(row, col)]) + ' '
-#
-#         print(res + '\n')
- 
-# def left_limit_action(x,y,taille):
-#     return x == 0 and y in range(0, taille-1);
-# 
-# def right_limit_action(x,y,taille):
-#     return x == taille-1 and y in range(0, taille-1);
-# 
-# def up_limit_action(x,y,taille):
-#     return x in range(0, taille-1) and y == 0;
-# 
-# def down_limit_action(x,y,taille):
-#     return x in range(0, taille-1) and y == taille-1;
+def show(states, len):
+    for col in range(len):
+        res = ''
+        for row in range(len):
+            if (row == len - 1):
+                res += '| ' + str(states[(row, col)]) + ' |'
+            else:
+                res += '| ' + str(states[(row, col)]) + ' '
+
+        print(res + '\n')
 
     # get first empty state of line or column
 def first_state_emptyY(current,indiceFixe,taille, inverse = False):
@@ -73,12 +61,16 @@ class ActionImpl:
     def _decale_states(self):
         self._decale_states()
     def apply_action(self):
+        print("#EnvGame: Avant \n")
+        show(self.current_states, self.lenght)
         # decaler
         self._decale_states()
         # merger
         self._merge_states()
         # decaler
         self._decale_states()
+        print("#EnvGame: Apres \n")
+        show(self.current_states, self.lenght)
 
 class UpActionImpl(ActionImpl):
 

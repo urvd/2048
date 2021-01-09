@@ -132,9 +132,12 @@ class Environment:
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
             action_applied = None
             # apply_action
-            if action == UP:
+            # permutation action haut et bas pour faire correspondre \
+                # l'axe des abscisse  (en bas) de l'affichage graphique avec
+                # celle du modele réel placé en haut.
+            if action == DOWN:
                 action_applied = UpActionImpl(current_states=copy(self.states), lenght=self.length)
-            elif action == DOWN:
+            elif action == UP:
                 action_applied = DownActionImpl(current_states=copy(self.states), lenght=self.length)
             elif action == LEFT:
                 action_applied = LeftActionImpl(current_states=copy(self.states), lenght=self.length)

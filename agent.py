@@ -36,14 +36,11 @@ class Agent:
             self.last_action = self.learning_policy.best_action(state=self.environment.get_state(),\
                                             last_reward_overload_noaction=self.environment.is_current_reward_overloaded(),\
                                                                 start=self.start)
-
-            print('#Action: ', self.last_action, '\n')
             self.environment.apply(self.last_action)
         else:
             self.last_action = keyName
             self.environment.apply(self.last_action)
-        # self.previous_state = self.environment.previous_states
-        # self.state = self.environment.states
+        print('#Action: ', self.last_action, '\n')
         self.state_score += self.environment.score
         self.continu = self.environment.get_current_reward != REWARD_GAMEOVER
 
