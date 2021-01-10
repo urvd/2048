@@ -17,7 +17,8 @@ class Environment:
         self.states = {}
         self.score = 0
         self._reward = 0
-        self._reward_noaction_overload = 0
+        self._reward_noeffect_overload = 0
+        self.goal = False
         print('2048 de taille ' + str(length))
         c1_init = Case(randomXY(length), randomXY(length), 2)
         c2_init = Case(randomXY(length), randomXY(length), 2)
@@ -52,7 +53,8 @@ class Environment:
                 if self.states[(row, col)] == 0:
                     self.empty_case_states[count] = Case(row, col, self.states[(row, col)])
                     count = count + 1
-
+                if self.states[(row, col)] == 2048:
+                    self.goal = True
         return count
 
     def count_empty_casesOf(self, state):
@@ -64,15 +66,15 @@ class Environment:
         return count
 
     def get_current_reward(self):
-        return  self._reward
+        return self._reward
 
     def is_current_reward_overloaded(self):
         if self._reward == REWARD_NO_EFFECT:
-            self._reward_noaction_overload = True
+            self._reward_noeffect_overload = True
         else:
-            self._reward_noaction_overload = False
+            self._reward_noeffect_overload = False
 
-        return self._reward_noaction_overload
+        return self._reward_noeffect_overload
 
     def _generate_random_new_case(self):
         newValue = randomValue()
@@ -126,7 +128,14 @@ class Environment:
     #                 count += 1
     #
     #     return [max, count]
+    def evaluate_when_game_over(self):
+        actionUp = UpActionImpl(current_states=copy(self.states), lenght=self.length)
+        actionDown = DownActionImpl(current_states=copy(self.states), lenght=self.length)
+        actionLeft = LeftActionImpl(current_states=copy(self.states), lenght=self.length)
+        actionRight = RightActionImpl(current_states=copy(self.states), lenght=self.length)
 
+        return self.is_same_as(actionUp.get_states()) and self.is_same_as(actionDown.get_states())\
+               and self.is_same_as(actionLeft.get_states()) and self.is_same_as(actionRight.get_states())
     def apply(self, action):
         self.previous_states = self.states
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
@@ -155,17 +164,17 @@ class Environment:
                 empty_cases = self.count_empty_cases()
                 if empty_cases != 0:
                     self._generate_random_new_case()
-                    if self.count_empty_cases() == 0:
-                        self._reward = REWARD_GAMEOVER
 
-                if (self._reward != REWARD_GAMEOVER):
-                    # reward default = score des case merger.
-                    self._reward = self.score
+                self._reward = self.score
             else:
+                self.score = 0
                 self._reward = REWARD_NO_EFFECT
-
-
-
+            if self.goal is True:
+                self._reward = REWARD_GOAL
+            if self.count_empty_cases() == 0 and self.evaluate_when_game_over():
+                self._reward = REWARD_GAMEOVER
+                if self.goal is True:
+                    self._reward = REWARD_GOAL
 
     def get_state(self):
         res = ''

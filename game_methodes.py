@@ -61,16 +61,12 @@ class ActionImpl:
     def _decale_states(self):
         self._decale_states()
     def apply_action(self):
-        print("#EnvGame: Avant \n")
-        show(self.current_states, self.lenght)
         # decaler
         self._decale_states()
         # merger
         self._merge_states()
         # decaler
         self._decale_states()
-        print("#EnvGame: Apres \n")
-        show(self.current_states, self.lenght)
 
 class UpActionImpl(ActionImpl):
 

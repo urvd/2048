@@ -1,4 +1,4 @@
-from game_params import MODE_APPRENTISSAGE, DEFAULT_LEARNING_RATE, REWARD_GAMEOVER
+from game_params import MODE_APPRENTISSAGE, DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, REWARD_GOAL
 from learning_policy import LearningPolicy
 
 
@@ -17,10 +17,16 @@ class Agent:
         self.state_score = 0
         self.final_score = 0
         self.continu = True
+
     def getState(self):
         return self.environment.states
+    def getStateLength(self):
+        return self.environment.length
+    def found2048(self):
+        return self.environment.goal
+
     def continue_game(self):
-        return self.continu and self.environment.get_current_reward() != REWARD_GAMEOVER
+        return self.continu
 
     def reset(self):
         if self.state_score > self.final_score:
@@ -42,7 +48,9 @@ class Agent:
             self.environment.apply(self.last_action)
         print('#Action: ', self.last_action, '\n')
         self.state_score += self.environment.score
-        self.continu = self.environment.get_current_reward != REWARD_GAMEOVER
+        self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
+        if self.environment.get_current_reward() == REWARD_GOAL:
+            self.continu = False
 
         if MODE_APPRENTISSAGE:
             if not init:

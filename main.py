@@ -31,23 +31,12 @@ class Summary:
 
         return  res
 
-
-def TraduireDirection(self, action):
-        if action == 'U':
-            return 'Haut'
-        if action == 'D':
-            return 'Bas'
-        if action == 'L':
-            return 'Gauche'
-        if action == 'D':
-            return 'Droite'
-
     #TODO: resoudre bug qui s'affiche une fois de temps en temps
     #TODO: Optimisation IA => amélioré la diversité des appels d'action
     #TODO: Optimisation IA => adapter avec réseaux de neurones.
 
     #TODO: Retoucher LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
-    # Corriger bug fuite de donnée
+    # TODO:
 
 
 # Screen
@@ -56,21 +45,40 @@ SCREEN_HEIGHT = 700
 SCREEN_TITLE = "-- 2048 --"
 
 # Text
-# TEXT_TOURS_XDIM = TEXT_ETAPE_XDIM = 50
-# TEXT_TOURS_YDIM = TEXT_FINAL_YDIM = 750
-# TEXT_ETAPE_YDIM = TEXT_CURRENT_XDIM = 730
+TEXT_TOURS_XDIM = TEXT_ETAPE_XDIM = 50
+TEXT_TOURS_YDIM = TEXT_FINAL_YDIM = 600
+TEXT_ETAPE_YDIM = TEXT_CURRENT_XDIM = 570
+TEXT_FINAL_XDIM = TEXT_CURRENT_XDIM = 480
 
 class Game2048Window(Window):
+
     def __init__(self, agent):
-        super().__init__(SCREEN_WIDTH, SCREEN_HEIGHT, SCREEN_TITLE)
+        if agent.getStateLength() == 4:
+            width = SCREEN_WIDTH
+            height = SCREEN_HEIGHT
+        if agent.getStateLength() == 5:
+            width = SCREEN_WIDTH + 100
+            height = SCREEN_HEIGHT + 100
+        elif agent.getStateLength() == 3:
+            width = SCREEN_WIDTH
+            height = SCREEN_HEIGHT
+        super().__init__(width, height, SCREEN_TITLE)
         self.agent = agent
         self.state = self.agent.getState()
+        self.length = self.agent.getStateLength()
         self.summary = Summary(IA_NB_TOURS)
         # ,self.continu = True
         self.summary.current_etape = 0
         self.summary.current_tours = 0
-        self.length = 4
         self.key_pressed = None
+
+        self.extra_xpoint = 0
+        self.extra_ypoint = 0
+        if self.length == 5:
+           self.extra_xpoint = 100
+        elif self.length == 3:
+            self.extra_ypoint = 100
+            self.extra_xpoint = 100
 
     def setup(self):
         self._render_game_core()
@@ -79,16 +87,13 @@ class Game2048Window(Window):
         draw_point(start_x, start_y, color.BLUE, 5)
         draw_text(text, start_x + 15, start_y, color.BLACK, 12)
 
-
-
-
     def _render_game_core(self):
-        self._text(50, 600, "Tours: " + str(self.summary.current_tours + 1))
-        self._text(50, 570, "Etape: " + str(self.summary.current_etape + 1))
-        self._text(480, 600, "Final score: " + str(self.agent.final_score))
-        self._text(480, 570, "Current score: " + str(self.agent.state_score))
+        self._text(50 + self.extra_xpoint, 600 + self.extra_ypoint, "Tours: " + str(self.summary.current_tours + 1))
+        self._text(50 + self.extra_xpoint, 570 +  self.extra_ypoint, "Etape: " + str(self.summary.current_etape + 1))
+        self._text(480 + self.extra_xpoint, 600 + self.extra_ypoint, "Best score: " + str(self.agent.final_score))
+        self._text(480 + self.extra_xpoint, 570 + self.extra_ypoint, "Current score: " + str(self.agent.state_score))
 
-        if agent.last_action is not None:
+        if self.agent.last_action is not None:
             action = self.agent.last_action
             actionDirection = ''
             if action == 'U':
@@ -100,15 +105,25 @@ class Game2048Window(Window):
             if action == 'R':
                 actionDirection = 'Droite'
 
-            draw_text("Action: " + actionDirection, 550, 450, color.BLACK, 16)
+            draw_text("Action: " + actionDirection, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
 
-        for x in range(100, (self.length + 2)*100, 100):
-            for y in range(100, (self.length + 2)*100, 100):
-                if x != 500 and y != 500:
-                    self._render_grille_case(x, y)
+        if self.agent.found2048 is True:
+            draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_poinyt, color.RED, 16)
+
+        for x in range(100, (self.length + 1)*100, 100):
+            for y in range(100, (self.length + 1)*100, 100):
+                # if x != 500 and y != 500:
+                self._render_grille_case(x, y)
+
         # dernier ligne vertical: | && horizontal: --
-        draw_line(500, 100, 500, 500, color.WHITE, 2)
-        draw_line(100, 500, 500, 500, color.WHITE, 2)
+        extra_point = 500
+        if self.length == 5:
+           extra_point = 600
+        elif self.length == 3:
+            extra_point = 400
+
+        draw_line(extra_point, 100, extra_point, extra_point, color.WHITE, 2)
+        draw_line(100, extra_point, extra_point, extra_point, color.WHITE, 2)
 
     def _render_grille_case(self, x, y):
         # vertical: |
@@ -123,7 +138,9 @@ class Game2048Window(Window):
 
     def on_draw(self):
         start_render()
-        draw_rectangle_filled(SCREEN_WIDTH / 2, SCREEN_HEIGHT / 2, SCREEN_WIDTH, SCREEN_HEIGHT, color.GRAY)
+        draw_rectangle_filled((SCREEN_WIDTH + self.extra_xpoint)/ 2, (SCREEN_HEIGHT + self.extra_ypoint) / 2, \
+                              (SCREEN_WIDTH + self.extra_xpoint), (SCREEN_HEIGHT + self.extra_ypoint),\
+                              color.GRAY)
         self._render_game_core()
 
     def on_update(self, delta_time):
@@ -133,7 +150,7 @@ class Game2048Window(Window):
             else:
                 self.agent.do()
 
-        time.sleep(0.5)
+        time.sleep(0.1)
         self.state = self.agent.getState()
 
         continu = agent.continue_game()

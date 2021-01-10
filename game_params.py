@@ -4,10 +4,10 @@ import random
 DEFAULT_LEARNING_RATE = 0.875
 DEFAULT_DISCOUNT_FACTOR = 0.9
 
-GAME_LENGHT = 4
+GAME_LENGHT = 5
 IA_NB_TOURS = 5
 # si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = False
+MODE_APPRENTISSAGE = True
 
 #game state schema
 '''    0 1 2 3
@@ -40,7 +40,7 @@ REWARD4 = 4
 REWARD2 = 2
 
 REWARD_DEFAULT = 1 # score state
-REWARD_GAMEOVER = -100000
+REWARD_GAMEOVER = -100
 REWARD_NO_EFFECT = -1
 
 
