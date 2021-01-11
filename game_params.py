@@ -4,7 +4,7 @@ import random
 DEFAULT_LEARNING_RATE = 0.875
 DEFAULT_DISCOUNT_FACTOR = 0.9
 
-GAME_LENGHT = 5
+GAME_LENGHT = 4
 IA_NB_TOURS = 5
 # si false on peut passer on peut jouer en mode joueur
 MODE_APPRENTISSAGE = True
