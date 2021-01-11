@@ -10,7 +10,7 @@ Executer main.py pour lancer le jeux
     environnement.py & case_de_tableaux & game_methodes.py: Implementation de ka Gestion de l"etat, actons et récompense du jeu
     learning_policy.py: Gestionnaire de l'apprentissage par renforcement
     game_params.py: données fixes et paramettrable.
-    
+    :::
 # Monitoring
 Vous pouvez manipuler les valeurs suivantes dans le fichier game_params.py :
 - GAME_LENGHT pour la taille du 2048, taille 3, 4 et 5 disponibles.
