@@ -7,7 +7,7 @@ from arcade import Window, run, color, set_background_color, draw_point, draw_te
 from agent import Agent
 from environnement import Environment
 from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE, \
-    RIGHT, DOWN, LEFT, UP
+    RIGHT, DOWN, LEFT, UP, GAME_SPEED
 
 
 class Summary:
@@ -25,18 +25,12 @@ class Summary:
         self.chain_actions.append(chain_actions)
     def show(self):
         res = ''
-        for i in range(0, self.nb_tours):
-            res += 'tours: '+ str(i+1) + '. Joué en '+ str(self.etapes[i]) + ' étapes. Score: '+ str(self.scores[i]) + '.\n'\
-            'Enchainement d\'actions: '+ self.chain_actions[i] + '\n\n'
+        #for i in range(0, self.nb_tours):
+        index = self.current_tours - 1
+        res += 'tours: '+ str(index) + '. Joué en '+ str(self.etapes[index]) + ' étapes. Score: '+ str(self.scores[index]) + '.\n'\
+            'Enchainement d\'actions: '+ self.chain_actions[index] + '\n\n'
 
-        return  res
-
-    #TODO: resoudre bug qui s'affiche une fois de temps en temps
-    #TODO: Optimisation IA => amélioré la diversité des appels d'action
-    #TODO: Optimisation IA => adapter avec réseaux de neurones.
-
-    #TODO: Retoucher LE JEUX AVEC UNE BBTHEQUE GRAPHIQUE
-    # TODO:
+        return res
 
 
 # Screen
@@ -150,7 +144,7 @@ class Game2048Window(Window):
             else:
                 self.agent.do()
 
-        time.sleep(0.1)
+        time.sleep(GAME_SPEED)
         self.state = self.agent.getState()
 
         continu = agent.continue_game()
@@ -158,6 +152,7 @@ class Game2048Window(Window):
             self.summary.add(agent.state_score, agent.getListActions())
             self.summary.current_etape = 0
             self.summary.current_tours += 1
+            print(self.summary.show())
             agent.reset()
         else:
             if MODE_APPRENTISSAGE:

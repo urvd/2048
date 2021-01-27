@@ -75,7 +75,6 @@ class LearningPolicy: #Q-table
         # b = previous_state == self.listOfStates[1]
         index = self.listOfStates.index(previous_state)
         maxQ = max(self.qtable[self.listOfStates.index(state)].values())
-        self.qtable[index][last_action] += self.learning_rate * \
-            (reward + self.discount_factor * maxQ - self.qtable[index][last_action])
+        self.qtable[index][last_action] += self.learning_rate * (reward + self.discount_factor * maxQ - self.qtable[index][last_action])
 
 

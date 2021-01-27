@@ -91,43 +91,6 @@ class Environment:
                     return False
         return True
 
-    # def calcul_reward_attribution(self):
-    #     max = 0
-    #     fixedmax = max
-    #     count = 0
-    #     for row in range(0, self.length):
-    #         for col in range(0, self.length):
-    #
-    #             if self.states[(row, col)] == REWARD_GOAL and max < REWARD_GOAL:
-    #                 max = REWARD_GOAL
-    #             if self.states[(row, col)] == REWARD1024 and max < REWARD1024:
-    #                 max = REWARD1024
-    #             if self.states[(row, col)] == REWARD512 and max < REWARD512:
-    #                 max = REWARD512
-    #             if self.states[(row, col)] == REWARD256 and max < REWARD256:
-    #                 max = REWARD256
-    #             if self.states[(row, col)] == REWARD128 and max < REWARD128:
-    #                 max = REWARD128
-    #             if self.states[(row, col)] == REWARD64 and max < REWARD64:
-    #                 max = REWARD64
-    #             if self.states[(row, col)] == REWARD32 and max < REWARD32:
-    #                 max = REWARD32
-    #             if self.states[(row, col)] == REWARD16 and max < REWARD16:
-    #                 max = REWARD16
-    #             if self.states[(row, col)] == REWARD8 and max < REWARD8:
-    #                 max = REWARD8
-    #             if self.states[(row, col)] == REWARD4 and max < REWARD4:
-    #                 max = REWARD4
-    #             if self.states[(row, col)] == REWARD2 and max < REWARD2:
-    #                 max = REWARD2
-    #
-    #             if max is not fixedmax:
-    #                 fixedmax = max
-    #                 count = 1
-    #             else:
-    #                 count += 1
-    #
-    #     return [max, count]
     def evaluate_when_game_over(self):
         actionUp = UpActionImpl(current_states=copy(self.states), lenght=self.length)
         actionDown = DownActionImpl(current_states=copy(self.states), lenght=self.length)

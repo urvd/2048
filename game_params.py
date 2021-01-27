@@ -41,8 +41,9 @@ REWARD2 = 2
 
 REWARD_DEFAULT = 1 # score state
 REWARD_GAMEOVER = -100
-REWARD_NO_EFFECT = -1
+REWARD_NO_EFFECT = -8
 
+GAME_SPEED = 0.1
 
 #Generer Aleatoirement
 GENERATED_VALUES = [2, 4] #TODO: Générer aléatoirement avec une fréquence plus importante pour le 2
