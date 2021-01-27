@@ -1,9 +1,10 @@
 import random
 
 # learning param
-DEFAULT_LEARNING_RATE = 0.875
-DEFAULT_DISCOUNT_FACTOR = 0.9
+DEFAULT_LEARNING_RATE = 0.01
+DEFAULT_DISCOUNT_FACTOR = 0.2
 
+GAME_SPEED = 0.05
 GAME_LENGHT = 4
 IA_NB_TOURS = 5
 # si false on peut passer on peut jouer en mode joueur
@@ -28,22 +29,11 @@ ACTIONS = ['U', 'D', 'L', 'R']
 #game reward
 
 REWARD_GOAL = 2048
-REWARD1024 = 1024
-REWARD512 = 512
-REWARD256 = 256
-REWARD128 = 128
-REWARD64 = 64
-REWARD32 = 32
-REWARD16 = 16
-REWARD8 = 8
-REWARD4 = 4
-REWARD2 = 2
 
 REWARD_DEFAULT = 1 # score state
 REWARD_GAMEOVER = -100
 REWARD_NO_EFFECT = -8
 
-GAME_SPEED = 0.1
 
 #Generer Aleatoirement
 GENERATED_VALUES = [2, 4] #TODO: Générer aléatoirement avec une fréquence plus importante pour le 2

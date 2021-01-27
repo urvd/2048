@@ -1,7 +1,7 @@
 from copy import copy
 
 from case_de_tableaux import Case
-from game_methodes import UpActionImpl, DownActionImpl, LeftActionImpl, RightActionImpl
+from game_deplacement import UpActionImpl, DownActionImpl, LeftActionImpl, RightActionImpl
 from game_params import *
 
 

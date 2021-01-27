@@ -2,28 +2,28 @@
 # from sklearn.neural_network import MLPRegressor
 # import numpy as np
 from copy import copy
-from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT, ACTIONS
+from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT, ACTIONS, DEFAULT_LEARNING_RATE, \
+    DEFAULT_DISCOUNT_FACTOR
 
 
 class LearningPolicy: #Q-table
     def __init__(self, states_sign, actions, game_lenght, learning_rate=0.9, discount_factor=0.5):
         self.listOfStates = []
         self.qtable = {}
-        self.learning_rate = learning_rate
-        self.discount_factor = discount_factor
+        self.learning_rate = DEFAULT_LEARNING_RATE
+        self.discount_factor = DEFAULT_DISCOUNT_FACTOR
         self.state_lenght = (game_lenght * game_lenght) * (2**11)
         self.actions = actions
         self._chosensActions = None
         self.nb_successif_overload_action = 0
         self.listOfStates.append(states_sign)
+        self.cas_total = 0
 
         #creer la Qtable de base || recuperer d'un fichier
         for sid in range(self.state_lenght):
             self.qtable[sid] = {}
             for a in self.actions:
-
                 self.qtable[sid][a] = 0
-
         self.state_cas = 0
 
     def __repr__(self):
@@ -71,8 +71,7 @@ class LearningPolicy: #Q-table
         if state not in self.listOfStates:
             self.listOfStates.append(state)
             self.state_cas += 1
-        # a = previous_state == self.listOfStates[0]
-        # b = previous_state == self.listOfStates[1]
+        self.cas_total += 1
         index = self.listOfStates.index(previous_state)
         maxQ = max(self.qtable[self.listOfStates.index(state)].values())
         self.qtable[index][last_action] += self.learning_rate * (reward + self.discount_factor * maxQ - self.qtable[index][last_action])

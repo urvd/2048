@@ -7,11 +7,10 @@ class Agent:
         self.environment = environment
         # self.state = environment.states
         # self.previous_state = self.environment.previous_states
-        self.last_action = None
+        self.last_action = 'U'
         self.learning_policy = LearningPolicy(states_sign=self.environment.get_state(), \
                                               actions={'U', 'D', 'L', 'R'}, \
-                                              game_lenght=self.environment.length, \
-                                              learning_rate=DEFAULT_LEARNING_RATE)
+                                              game_lenght=self.environment.length)
         self.start = True
         self.list_action = ''
         self.state_score = 0
@@ -38,11 +37,12 @@ class Agent:
     def do(self, init=False, keyName=None):
         # TODO: CODER ET IMPL L'algo d'apprentissage du jeux
         #Calcul de la meilleur actions à réaliser selon l'état en cours du jeux de l'environnement
+        action = ''
         if MODE_APPRENTISSAGE:
-            self.last_action = self.learning_policy.best_action(state=self.environment.get_state(),\
+            action = self.learning_policy.best_action(state=self.environment.get_state(),\
                                             last_reward_overload_noaction=self.environment.is_current_reward_overloaded(),\
                                                                 start=self.start)
-            self.environment.apply(self.last_action)
+            self.environment.apply(action)
         else:
             self.last_action = keyName
             self.environment.apply(self.last_action)
@@ -58,5 +58,7 @@ class Agent:
                 self.learning_policy.update(previous_state=self.environment.get_pre_state(), \
                                             state=self.environment.get_state(), last_action=self.last_action, \
                                             reward=self.environment.get_current_reward())
+            self.last_action = action
+
     def getListActions(self):
         return self.learning_policy.get_listedActions()
