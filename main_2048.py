@@ -1,8 +1,9 @@
+#!/usr/bin/env python3
+
 import random
 from copy import copy
 import time
-from arcade import Window, run, color, set_background_color, draw_point, draw_text, draw_rectangle_filled, draw_line, \
-    start_render, key
+from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, XYWH, draw_line, key
 
 from agent import Agent
 from environnement import Environment
@@ -102,7 +103,7 @@ class Game2048Window(Window):
             draw_text("Action: " + actionDirection, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
 
         if self.agent.found2048 is True:
-            draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_poinyt, color.RED, 16)
+            draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_ypoint, color.RED, 16)
 
         for x in range(100, (self.length + 1)*100, 100):
             for y in range(100, (self.length + 1)*100, 100):
@@ -125,16 +126,16 @@ class Game2048Window(Window):
         # horizontal: --
         draw_line(x, y, x + 100, y, color.WHITE, 2)
 
-        draw_rectangle_filled(x+50, y+50, 100, 100, color.GOLD)
+        draw_rect_filled(
+            XYWH(x + 50, y + 50, 100, 100),
+            color.GOLD
+        )
 
         if self.state[((x/100) - 1, (y/100) - 1)] != 0:
             draw_text(str(self.state[((x/100) - 1, (y/100) - 1)]), x + 48, y + 48, color.BLACK, 18)
 
     def on_draw(self):
-        start_render()
-        draw_rectangle_filled((SCREEN_WIDTH + self.extra_xpoint)/ 2, (SCREEN_HEIGHT + self.extra_ypoint) / 2, \
-                              (SCREEN_WIDTH + self.extra_xpoint), (SCREEN_HEIGHT + self.extra_ypoint),\
-                              color.GRAY)
+        self.clear(color.GRAY)
         self._render_game_core()
 
     def on_update(self, delta_time):
