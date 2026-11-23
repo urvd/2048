@@ -1,9 +1,14 @@
-#librairie requis: (pip install)
-    scikit-neuralnetwork-0.7
-    numpy
-    arcade
+# Installation
+    python3 -m venv .venv
+    source .venv/bin/activate      # Windows : .venv\Scripts\activate
+    pip install -r requirements.txt   # arcade 3.x
+
 # Pour Lancer le jeux
-Executer main.py pour lancer le jeux
+    python main_2048.py
+
+# Tests
+    python tests/smoke_logic.py
+
 # Description
     main_2048.py: impl du jeux et adaption 3D
     agent.py: Management du deroulement du jeu et Gestionnaire de l"etat, des actions et des recompense et de l"IA.

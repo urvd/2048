@@ -148,13 +148,13 @@ class Game2048Window(Window):
         time.sleep(GAME_SPEED)
         self.state = self.agent.getState()
 
-        continu = agent.continue_game()
+        continu = self.agent.continue_game()
         if not continu:
-            self.summary.add(agent.state_score, agent.getListActions())
+            self.summary.add(self.agent.state_score, self.agent.getListActions())
             self.summary.current_etape = 0
             self.summary.current_tours += 1
             print(self.summary.show())
-            agent.reset()
+            self.agent.reset()
         else:
             if MODE_APPRENTISSAGE:
                 self.summary.current_etape += 1
