@@ -58,8 +58,10 @@ class ActionImpl:
 
     def _merge_states(self):
         self._merge_states()
+        
     def _decale_states(self):
         self._decale_states()
+
     def apply_action(self):
         # decaler
         self._decale_states()

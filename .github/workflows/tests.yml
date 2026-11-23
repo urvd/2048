@@ -1,0 +1,26 @@
+name: CI
+
+on:
+  push:
+    branches: [main, dev-optimize]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+          cache: pip
+      - run: pip install -r requirements.txt
+      - name: Compilation
+        run: python -m compileall -q -x '(^|/)venv/' .
+      - name: Logique du jeu
+        run: python tests/smoke_logic.py
+      - name: Import de l'interface arcade
+        run: python -c "import main_2048"

@@ -3,6 +3,7 @@
 import random
 from copy import copy
 import time
+from action import ActionTextValue
 from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, XYWH, draw_line, key
 
 from agent import Agent
@@ -24,6 +25,8 @@ class Summary:
         self.etapes.append(self.current_etape)
         self.scores.append(score)
         self.chain_actions.append(chain_actions)
+
+    # Affichage  du résume si affichage console   
     def show(self):
         res = ''
         #for i in range(0, self.nb_tours):
@@ -43,7 +46,7 @@ SCREEN_TITLE = "-- 2048 --"
 TEXT_TOURS_XDIM = TEXT_ETAPE_XDIM = 50
 TEXT_TOURS_YDIM = TEXT_FINAL_YDIM = 600
 TEXT_ETAPE_YDIM = TEXT_CURRENT_XDIM = 570
-TEXT_FINAL_XDIM = TEXT_CURRENT_XDIM = 480
+TEXT_FINAL_XDIM = TEXT_CURRENT_YDIM = 480
 
 class Game2048Window(Window):
 
@@ -83,25 +86,21 @@ class Game2048Window(Window):
         draw_text(text, start_x + 15, start_y, color.BLACK, 12)
 
     def _render_game_core(self):
-        self._text(50 + self.extra_xpoint, 600 + self.extra_ypoint, "Tours: " + str(self.summary.current_tours + 1))
-        self._text(50 + self.extra_xpoint, 570 +  self.extra_ypoint, "Etape: " + str(self.summary.current_etape + 1))
-        self._text(480 + self.extra_xpoint, 600 + self.extra_ypoint, "Best score: " + str(self.agent.final_score))
-        self._text(480 + self.extra_xpoint, 570 + self.extra_ypoint, "Current score: " + str(self.agent.state_score))
-
+        #render text : Element resumer du jeux
+        self._text(50 + self.extra_xpoint, 600 + self.extra_ypoint, "Tours : " + str(self.summary.current_tours + 1))
+        self._text(50 + self.extra_xpoint, 570 +  self.extra_ypoint, "Etape : " + str(self.summary.current_etape + 1))
+        self._text(480 + self.extra_xpoint, 600 + self.extra_ypoint, "Best score : " + str(self.agent.final_score))
+        self._text(480 + self.extra_xpoint, 570 + self.extra_ypoint, "Current score : " + str(self.agent.state_score))
+        #render text : Action choisie par l'IA ou le joueur
         if self.agent.last_action is not None:
             action = self.agent.last_action
-            actionDirection = ''
-            if action == 'U':
-                actionDirection = 'Haut'
-            if action == 'D':
-                actionDirection = 'Bas'
-            if action == 'L':
-                actionDirection = 'Gauche'
-            if action == 'R':
-                actionDirection = 'Droite'
+            actionText = ActionTextValue(action)
+            actionPreviousText = ActionTextValue(self.agent.previous_action)
 
-            draw_text("Action: " + actionDirection, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
-
+            draw_text("Action : " + actionText, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
+            draw_text("Previous Action : " + actionPreviousText , 550 + self.extra_xpoint, 420 + self.extra_ypoint, color.BLACK, 16)
+        
+        #render text : Dans lecas ou l'IA trouve le 2048.
         if self.agent.found2048 is True:
             draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_ypoint, color.RED, 16)
 
@@ -125,13 +124,18 @@ class Game2048Window(Window):
         draw_line(x, y, x, y + 100, color.WHITE, 2)
         # horizontal: --
         draw_line(x, y, x + 100, y, color.WHITE, 2)
-
-        draw_rect_filled(
-            XYWH(x + 50, y + 50, 100, 100),
-            color.GOLD
-        )
-
-        if self.state[((x/100) - 1, (y/100) - 1)] != 0:
+        
+        # render case value if case empty or not
+        if(self.state[((x/100) - 1, (y/100) - 1)] == 0):
+            draw_rect_filled(
+                XYWH(x + 50, y + 50, 100, 100),
+                color.YELLOW
+            )
+        else:
+            draw_rect_filled(
+                XYWH(x + 50, y + 50, 100, 100),
+                color.GOLD
+            )
             draw_text(str(self.state[((x/100) - 1, (y/100) - 1)]), x + 48, y + 48, color.BLACK, 18)
 
     def on_draw(self):
@@ -148,13 +152,13 @@ class Game2048Window(Window):
         time.sleep(GAME_SPEED)
         self.state = self.agent.getState()
 
-        continu = agent.continue_game()
+        continu = self.agent.continue_game()
         if not continu:
-            self.summary.add(agent.state_score, agent.getListActions())
+            self.summary.add(self.agent.state_score, self.agent.getListActions())
             self.summary.current_etape = 0
             self.summary.current_tours += 1
             print(self.summary.show())
-            agent.reset()
+            self.agent.reset()
         else:
             if MODE_APPRENTISSAGE:
                 self.summary.current_etape += 1
@@ -164,20 +168,28 @@ class Game2048Window(Window):
 
             if k == key.UP:
                 self.key_pressed = UP
-                self.agent.do(keyName=self.key_pressed)
-                self.summary.current_etape += 1
+                self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
+                states_changed = self.agent.environment.states_not_changed();
+                if not states_changed:
+                    self.summary.current_etape += 1
             if k == key.DOWN:
                 self.key_pressed = DOWN
-                self.agent.do(keyName=self.key_pressed)
-                self.summary.current_etape += 1
+                self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
+                states_changed = self.agent.environment.states_not_changed();
+                if not states_changed:
+                    self.summary.current_etape += 1
             if k == key.LEFT:
                 self.key_pressed = LEFT
-                self.agent.do(keyName=self.key_pressed)
-                self.summary.current_etape += 1
+                self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
+                states_changed = self.agent.environment.states_not_changed();
+                if not states_changed:
+                    self.summary.current_etape += 1
             if k == key.RIGHT:
                 self.key_pressed = RIGHT
-                self.agent.do(keyName=self.key_pressed)
-                self.summary.current_etape += 1
+                self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
+                states_changed = self.agent.environment.states_not_changed();
+                if not states_changed:
+                    self.summary.current_etape += 1
 
 if __name__ == '__main__':
     # New
