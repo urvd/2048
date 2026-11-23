@@ -13,6 +13,8 @@ class Environment:
     def reset(self):
         self.set(self.length)
 
+    # Initialisation de l'environnement 2048, 2 premières cases sont 
+    # générées aléatoirement avec la valeur 2.
     def set(self, length=4):
         self.states = {}
         self.score = 0
@@ -38,8 +40,8 @@ class Environment:
                 else:
                     self.states[(row, col)] = 0
 
-        print('c1 generated: ' + c1_init.toString())
-        print('c2 generated ' + c2_init.toString())
+        print('c1 generated : ' + c1_init.toString())
+        print('c2 generated : ' + c2_init.toString())
 
         self.previous_states = {}
 
@@ -84,21 +86,23 @@ class Environment:
 
         self.states[randomX, randomY] = newValue
 
-    def is_same_as(self, otherstates):
+    def _is_same_as(self, otherstates):
         for row in range(0,self.length):
             for col in range(0, self.length):
                 if not self.states[(row, col)] == otherstates[(row, col)]:
                     return False
         return True
-
+    def states_not_changed(self):
+        return self._is_same_as(self.previous_states);
     def evaluate_when_game_over(self):
         actionUp = UpActionImpl(current_states=copy(self.states), lenght=self.length)
         actionDown = DownActionImpl(current_states=copy(self.states), lenght=self.length)
         actionLeft = LeftActionImpl(current_states=copy(self.states), lenght=self.length)
         actionRight = RightActionImpl(current_states=copy(self.states), lenght=self.length)
 
-        return self.is_same_as(actionUp.get_states()) and self.is_same_as(actionDown.get_states())\
-               and self.is_same_as(actionLeft.get_states()) and self.is_same_as(actionRight.get_states())
+        return self._is_same_as(actionUp.get_states()) and self._is_same_as(actionDown.get_states())\
+               and self._is_same_as(actionLeft.get_states()) and self._is_same_as(actionRight.get_states())
+    
     def apply(self, action):
         self.previous_states = self.states
         if action == UP or action == DOWN or action == RIGHT or action == LEFT:
@@ -117,13 +121,13 @@ class Environment:
                 action_applied = RightActionImpl(current_states=copy(self.states), lenght=self.length)
 
 
-
-            if self.is_same_as(action_applied.get_states()) is False:
+            #
+            if self._is_same_as(action_applied.get_states()) is False:
 
                 self.states = action_applied.get_states()
                 self.score = action_applied.get_score()
 
-                # generate new case
+                # generate nouvelle case
                 empty_cases = self.count_empty_cases()
                 if empty_cases != 0:
                     self._generate_random_new_case()

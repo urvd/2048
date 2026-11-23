@@ -8,6 +8,7 @@ class Agent:
         # self.state = environment.states
         # self.previous_state = self.environment.previous_states
         self.last_action = 'U'
+        self.previous_action = ''
         self.learning_policy = LearningPolicy(states_sign=self.environment.get_state(), \
                                               actions={'U', 'D', 'L', 'R'}, \
                                               game_lenght=self.environment.length)
@@ -34,7 +35,10 @@ class Agent:
         self.last_action = None
         self.environment.reset()
 
-    def do(self, init=False, keyName=None):
+    def do(self, init=False, keyName=None, prev_keyName=None):
+
+        if prev_keyName is not None:
+            self.previous_action = prev_keyName
         # TODO: CODER ET IMPL L'algo d'apprentissage du jeux
         #Calcul de la meilleur actions à réaliser selon l'état en cours du jeux de l'environnement
         action = ''
@@ -43,12 +47,14 @@ class Agent:
                                             last_reward_overload_noaction=self.environment.is_current_reward_overloaded(),\
                                                                 start=self.start)
             self.environment.apply(action)
+
+            self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
         else:
             self.last_action = keyName
             self.environment.apply(self.last_action)
         # print('#Action: ', self.last_action, '\n')
         self.state_score += self.environment.score
-        self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
+        #self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
         if self.environment.get_current_reward() == REWARD_GOAL:
             self.continu = False
 
