@@ -94,6 +94,7 @@ class Environment:
         return True
     def states_not_changed(self):
         return self._is_same_as(self.previous_states);
+
     def evaluate_when_game_over(self):
         actionUp = UpActionImpl(current_states=copy(self.states), lenght=self.length)
         actionDown = DownActionImpl(current_states=copy(self.states), lenght=self.length)
