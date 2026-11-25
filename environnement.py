@@ -15,7 +15,7 @@ class Environment:
 
     # Initialisation de l'environnement 2048, 2 premières cases sont 
     # générées aléatoirement avec la valeur 2.
-    def set(self, length=4):
+    def set(self, length):
         self.states = {}
         self.score = 0
         self._reward = 0
