@@ -1,14 +1,14 @@
 import random
 
 # si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = False
-
+MODE_APPRENTISSAGE = True
+ACTION_WITH_HASARD = True
 #Paramètres de l'IA par renforcement
 # learning param
 DEFAULT_LEARNING_RATE = 0.01
 DEFAULT_DISCOUNT_FACTOR = 0.2
 
-GAME_SPEED = 0.05
+GAME_SPEED = 1.05
 GAME_LENGHT = 4
 IA_NB_TOURS = 5
 

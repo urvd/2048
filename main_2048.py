@@ -31,7 +31,7 @@ class Summary:
         res = ''
         #for i in range(0, self.nb_tours):
         index = self.current_tours - 1
-        res += 'tours: '+ str(index) + '. Joué en '+ str(self.etapes[index]) + ' étapes. Score: '+ str(self.scores[index]) + '.\n'\
+        res += 'tours: '+ str(self.current_tours) + '. Joué en '+ str(self.etapes[index]) + ' étapes. Score: '+ str(self.scores[index]) + '.\n'\
             'Enchainement d\'actions: '+ self.chain_actions[index] + '\n\n'
 
         return res
@@ -86,7 +86,7 @@ class Game2048Window(Window):
         draw_text(text, start_x + 15, start_y, color.BLACK, 12)
 
     def _render_game_core(self):
-        #render text : Element resumer du jeux
+        #render text : Element resumé du jeux
         self._text(50 + self.extra_xpoint, 600 + self.extra_ypoint, "Tours : " + str(self.summary.current_tours + 1))
         self._text(50 + self.extra_xpoint, 570 +  self.extra_ypoint, "Etape : " + str(self.summary.current_etape + 1))
         self._text(480 + self.extra_xpoint, 600 + self.extra_ypoint, "Best score : " + str(self.agent.final_score))
@@ -100,7 +100,7 @@ class Game2048Window(Window):
             draw_text("Action : " + actionText, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
             draw_text("Previous Action : " + actionPreviousText , 550 + self.extra_xpoint, 420 + self.extra_ypoint, color.BLACK, 16)
         
-        #render text : Dans lecas ou l'IA trouve le 2048.
+        #render text : Dans lec as ou l'IA trouve le 2048.
         if self.agent.found2048 is True:
             draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_ypoint, color.RED, 16)
 
@@ -147,13 +147,12 @@ class Game2048Window(Window):
             if self.summary.current_etape == 0:
                 self.agent.do(init=True)
             else:
-                self.agent.do()
+                self.agent.do(prev_keyName=self.agent.last_action)
+            time.sleep(GAME_SPEED)
 
-        time.sleep(GAME_SPEED)
         self.state = self.agent.getState()
 
-        continu = self.agent.continue_game()
-        if not continu:
+        if not self.agent.continue_game():
             self.summary.add(self.agent.state_score, self.agent.getListActions())
             self.summary.current_etape = 0
             self.summary.current_tours += 1
@@ -161,35 +160,43 @@ class Game2048Window(Window):
             self.agent.reset()
         else:
             if MODE_APPRENTISSAGE:
-                self.summary.current_etape += 1
+                if not self._state_not_changed():
+                    self.summary.current_etape += 1
 
+    # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):
         if not MODE_APPRENTISSAGE:
-
             if k == key.UP:
                 self.key_pressed = UP
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
-                states_changed = self.agent.environment.states_not_changed();
-                if not states_changed:
+                if not self._state_not_changed():
                     self.summary.current_etape += 1
             if k == key.DOWN:
                 self.key_pressed = DOWN
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
                 states_changed = self.agent.environment.states_not_changed();
-                if not states_changed:
+                if not self._state_not_changed():
                     self.summary.current_etape += 1
             if k == key.LEFT:
                 self.key_pressed = LEFT
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
                 states_changed = self.agent.environment.states_not_changed();
-                if not states_changed:
+                if not self._state_not_changed():
                     self.summary.current_etape += 1
             if k == key.RIGHT:
                 self.key_pressed = RIGHT
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
-                states_changed = self.agent.environment.states_not_changed();
-                if not states_changed:
+                if not self._state_not_changed():
                     self.summary.current_etape += 1
+        if k == key.ESCAPE:
+            #TODO : register data in a file or DB for analysis if succes or fail
+            if not self.agent.continue_game():
+                self.summary.add(self.agent.state_score, self.agent.getListActions())
+                print(self.summary.show())
+            self.close()
+
+    def _state_not_changed(self):
+        return self.agent.environment.states_not_changed()   
 
 if __name__ == '__main__':
     # New
@@ -198,5 +205,3 @@ if __name__ == '__main__':
     window = Game2048Window(agent)
     window.setup()
     run()
-
-# See PyCharm help at https://www.jetbrains.com/help/pycharm/
