@@ -2,7 +2,7 @@
 # from sklearn.neural_network import MLPRegressor
 # import numpy as np
 from copy import copy
-from game_params import generateDefaultAction, UP, DOWN, LEFT, RIGHT, ACTIONS, DEFAULT_LEARNING_RATE, \
+from game_params import generateDefaultAction, DEFAULT_LEARNING_RATE, \
     DEFAULT_DISCOUNT_FACTOR
 
 

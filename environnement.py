@@ -8,10 +8,10 @@ from game_params import *
 class Environment:
     def __init__(self, length):
         self.length = length
-        self.set()
+        self.set(length = self.length)
 
     def reset(self):
-        self.set(self.length)
+        self.set(length = self.length)
 
     # Initialisation de l'environnement 2048, 2 premières cases sont 
     # générées aléatoirement avec la valeur 2.
@@ -50,6 +50,7 @@ class Environment:
 
     def count_empty_cases(self):
         count = 0
+        self.empty_case_states = {}
         for row in range(self.length):
             for col in range(self.length):
                 if self.states[(row, col)] == 0:
