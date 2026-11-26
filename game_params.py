@@ -1,4 +1,5 @@
-import os, random
+import os
+import random
 
 #game parameters
 GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))

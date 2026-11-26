@@ -138,7 +138,6 @@ class Environment:
             if self.goal is True:
                 self._reward = REWARD_GOAL
             if self.count_empty_cases() == 0 and self.evaluate_when_game_over() is True:
-                
                 if self.goal is True:
                     self._reward = REWARD_GOAL
                 else:

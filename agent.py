@@ -70,7 +70,7 @@ class Agent:
                                             reward=self.environment.get_current_reward())
             self.last_action = action
     def current_game_not_first_tour(self, tour):
-        if tour == 0:
+        if tour == 1:
             self.final_score = self.state_score
 
     def getListActions(self):
