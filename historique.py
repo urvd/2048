@@ -14,6 +14,7 @@ SEPARATEUR = ";"  # s'ouvre directement dans un Excel configuré en français
 
 COLONNES = [
     # Partie
+    "tentative",
     "date",
     "heure",
     "taille_grille",
@@ -94,18 +95,26 @@ def _migrer_colonnes(chemin):
         writer.writerows(parties)
 
 
-def enregistrer_partie(ligne, chemin=None):
-    """Ajoute une ligne au fichier CSV (l'en-tête est écrit à la création du fichier).
+def derniere_tentative(chemin):
+    """Numéro de la dernière tentative enregistrée dans le fichier (0 si aucune)."""
+    numeros = [int(row["tentative"]) for row in lire_parties(chemin)
+               if (row.get("tentative") or "").isdigit()]
+    return max(numeros, default=0)
 
-    Renvoie le chemin du fichier.
+
+def enregistrer_partie(ligne, chemin=None):
+    """Ajoute une ligne au fichier CSV avec le numéro de tentative suivant.
+
+    L'en-tête est écrit à la création du fichier. Renvoie le chemin et le numéro de tentative.
     """
     chemin = chemin or FICHIER_PARTIES
     nouveau_fichier = not os.path.exists(chemin) or os.path.getsize(chemin) == 0
     if not nouveau_fichier:
         _migrer_colonnes(chemin)
+    ligne = {"tentative": derniere_tentative(chemin) + 1, **ligne}
     with open(chemin, "a", newline="", encoding="utf-8") as fichier:
         writer = csv.DictWriter(fichier, fieldnames=COLONNES, delimiter=SEPARATEUR)
         if nouveau_fichier:
             writer.writeheader()
         writer.writerow(ligne)
-    return chemin
+    return chemin, ligne["tentative"]

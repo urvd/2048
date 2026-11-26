@@ -30,8 +30,7 @@ class HistoriqueTest(unittest.TestCase):
     def test_ligne_contient_toutes_les_colonnes(self):
         agent = self._partie_terminee()
         ligne = ligne_partie(agent, nb_etapes=12, duree_secondes=3.14)
-        self.assertEqual(list(ligne), COLONNES)
-        self.assertEqual(COLONNES[:2], ["date", "heure"])
+        self.assertEqual(["tentative"] + list(ligne), COLONNES)
         self.assertEqual(ligne["nb_etapes"], 12)
         self.assertEqual(ligne["score_total"], agent.state_score)
         self.assertIn(ligne["tuile_2048_trouvee"], ("oui", "non"))
@@ -44,6 +43,13 @@ class HistoriqueTest(unittest.TestCase):
             lignes = list(csv.reader(fichier, delimiter=SEPARATEUR))
         self.assertEqual(lignes[0], COLONNES)
         self.assertEqual(len(lignes), 4)
+        self.assertEqual([ligne[0] for ligne in lignes[1:]], ["1", "2", "3"])
+
+    def test_tentative_reprend_apres_le_dernier_numero(self):
+        agent = self._partie_terminee()
+        enregistrer_partie(ligne_partie(agent, 5, 1.0), self.chemin)
+        _, tentative = enregistrer_partie(ligne_partie(agent, 5, 1.0), self.chemin)
+        self.assertEqual(tentative, 2)
 
 
 if __name__ == "__main__":
