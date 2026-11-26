@@ -177,7 +177,8 @@ class Game2048Window(Window):
             if MODE_APPRENTISSAGE:
                 ligne = ligne_partie(self.agent, self.summary.current_etape,
                                      time.monotonic() - self.debut_partie)
-                print("Partie enregistrée dans " + enregistrer_partie(ligne))
+                chemin, tentative = enregistrer_partie(ligne)
+                print(f"Tentative {tentative} enregistrée dans {chemin}")
 
     # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):

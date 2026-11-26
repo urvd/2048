@@ -14,6 +14,7 @@ SEPARATEUR = ";"  # s'ouvre directement dans un Excel configuré en français
 
 COLONNES = [
     # Partie
+    "tentative",
     "date",
     "heure",
     "taille_grille",
@@ -23,7 +24,7 @@ COLONNES = [
     "tuile_2048_trouvee",
     "duree_secondes",
     # Paramètres du jeu
-    "vitesse_simulation",
+    "intervalle_deplacement",
     # Paramètres de l'IA
     "learning_rate",
     "discount_factor",
@@ -51,7 +52,7 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
         "meilleure_tuile": max(environment.states.values()),
         "tuile_2048_trouvee": "oui" if environment.goal else "non",
         "duree_secondes": round(duree_secondes, 1),
-        "vitesse_simulation": game_params.GAME_SPEED,
+        "intervalle_deplacement": game_params.GAME_SPEED,
         "learning_rate": policy.learning_rate,
         "discount_factor": policy.discount_factor,
         "reward_default": game_params.REWARD_DEFAULT,
@@ -63,13 +64,27 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
     }
 
 
+def derniere_tentative(chemin):
+    """Numéro de la dernière tentative enregistrée dans le fichier (0 si aucune)."""
+    if not os.path.exists(chemin):
+        return 0
+    with open(chemin, newline="", encoding="utf-8") as fichier:
+        numeros = [int(row["tentative"]) for row in csv.DictReader(fichier, delimiter=SEPARATEUR)
+                   if (row.get("tentative") or "").isdigit()]
+    return max(numeros, default=0)
+
+
 def enregistrer_partie(ligne, chemin=None):
-    """Ajoute une ligne au fichier CSV (l'en-tête est écrit à la création du fichier)."""
+    """Ajoute une ligne au fichier CSV avec le numéro de tentative suivant.
+
+    L'en-tête est écrit à la création du fichier. Renvoie le chemin et le numéro de tentative.
+    """
     chemin = chemin or FICHIER_PARTIES
     nouveau_fichier = not os.path.exists(chemin) or os.path.getsize(chemin) == 0
+    ligne = {"tentative": derniere_tentative(chemin) + 1, **ligne}
     with open(chemin, "a", newline="", encoding="utf-8") as fichier:
         writer = csv.DictWriter(fichier, fieldnames=COLONNES, delimiter=SEPARATEUR)
         if nouveau_fichier:
             writer.writeheader()
         writer.writerow(ligne)
-    return chemin
+    return chemin, ligne["tentative"]
