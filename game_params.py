@@ -1,5 +1,24 @@
 import os
 import random
+from pathlib import Path
+
+# Charge le fichier .env placé à côté du code, quel que soit le dossier de lancement.
+# Les variables déjà définies dans le terminal restent prioritaires.
+try:
+    from dotenv import load_dotenv
+except ImportError:  # python-dotenv absent : seules les variables du terminal sont lues
+    load_dotenv = None
+if load_dotenv is not None:
+    load_dotenv(Path(__file__).resolve().with_name(".env"))
+
+
+def env_bool(nom, defaut):
+    """Lit une variable oui/non : true, True, 1, oui, yes, vrai (sans tenir compte des espaces)."""
+    valeur = os.getenv(nom)
+    if valeur is None or not valeur.strip():
+        return defaut
+    return valeur.strip().strip('"\'').casefold() in ("true", "1", "oui", "yes", "vrai")
+
 
 #game parameters
 GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))
@@ -7,7 +26,7 @@ GAME_LENGHT = 4
 IA_NB_TOURS = 5
 
  # si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE", "false").casefold() == "true"
+MODE_APPRENTISSAGE = env_bool("MODE_APPRENTISSAGE", False)
 #ACTION_WITH_HASARD = True
 
 #Paramètres de l'IA par renforcement
@@ -37,9 +56,9 @@ def recompenses_par_defaut():
 
 #Mémoire de l'IA entre les parties
 # Approche 1 : choisir learning_rate et discount_factor d'après le CSV des parties
-OPTIMISER_PARAMETRES = os.getenv("OPTIMISER_PARAMETRES", "true").casefold() == "true"
+OPTIMISER_PARAMETRES = env_bool("OPTIMISER_PARAMETRES", True)
 # Approche 2 : sauvegarder la Q-table en fin de partie et la recharger au lancement
-QTABLE_PERSISTANTE = os.getenv("QTABLE_PERSISTANTE", "true").casefold() == "true"
+QTABLE_PERSISTANTE = env_bool("QTABLE_PERSISTANTE", True)
 
 # Game state schema
 '''    0 1 2 3
