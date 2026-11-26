@@ -103,7 +103,7 @@ class Game2048Window(Window):
         #render text : Aide des touches pour l'utilisateur
         aide = "Echap : quitter le jeu"
         if not MODE_APPRENTISSAGE:
-            aide += ". Flèches : Fusionner et décaler les cases" + aide
+            aide = "Flèches : Fusionner et décaler les cases | " + aide
         draw_text(aide, 100, 40, color.BLACK, 14)
 
         #render text : Dans le cas ou l'IA trouve le 2048.
@@ -156,15 +156,14 @@ class Game2048Window(Window):
                 self.agent.do(prev_keyName=self.agent.last_action)
             time.sleep(GAME_SPEED)
 
-        self.state = self.agent.getState()
+        #self.state = self.agent.getState()
 
         if not self.agent.continue_game():
             self.summary.add(self.agent.state_score, self.agent.getListActions())
             self.summary.current_etape = 0
             self.summary.current_tours += 1
             print(self.summary.show())
-            time.sleep(3.0)
-            self.agent.reset()
+            
         else:
             if MODE_APPRENTISSAGE:
                 if not self._state_not_changed():
@@ -201,6 +200,12 @@ class Game2048Window(Window):
                 self.summary.add(self.agent.state_score, self.agent.getListActions())
                 print(self.summary.show())
             self.close()
+        #REset le     
+        if k == key.N:
+            self.agent.reset()
+            self.summary.current_etape = 0
+            #self.state = self.agent.getState()
+            print(f"Jeu réinitialisé ! {self.summary.nb_tours} tours joués. Score final: {self.agent.final_score}.")
 
     def _state_not_changed(self):
         return self.agent.environment.states_not_changed()   
