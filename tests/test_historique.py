@@ -31,6 +31,8 @@ class HistoriqueTest(unittest.TestCase):
         agent = self._partie_terminee()
         ligne = ligne_partie(agent, nb_etapes=12, duree_secondes=3.14)
         self.assertEqual(["tentative"] + list(ligne), COLONNES)
+        self.assertNotIn("date", COLONNES)
+        self.assertNotIn("heure", COLONNES)
         self.assertEqual(ligne["nb_etapes"], 12)
         self.assertEqual(ligne["score_total"], agent.state_score)
         self.assertIn(ligne["tuile_2048_trouvee"], ("oui", "non"))
