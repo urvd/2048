@@ -13,3 +13,5 @@ venv.bak/
 
 _pycache_/
 .idea
+# Historique local des parties de l'IA
+parties_ia.csv

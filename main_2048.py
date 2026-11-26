@@ -2,10 +2,12 @@
 
 import random
 from copy import copy
+import time
 from action import ActionTextValue
 from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, XYWH, draw_line, key
 
 from agent import Agent
+from historique import enregistrer_partie, ligne_partie
 from environnement import Environment
 from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE, \
     RIGHT, DOWN, LEFT, UP, GAME_SPEED
@@ -74,6 +76,8 @@ class Game2048Window(Window):
         self.partie_enregistree = False
         # Temps écoulé depuis le dernier coup de l'IA (remplace time.sleep)
         self.temps_depuis_coup = 0.0
+        # Début de la partie, pour la durée enregistrée dans le CSV
+        self.debut_partie = time.monotonic()
 
         # Positions des textes
         self.text_top_y = height - 100
@@ -170,6 +174,10 @@ class Game2048Window(Window):
             self.agent.update_best_score()
             self.summary.add(self.agent.state_score, self.agent.getListActions())
             print(self.summary.show())
+            if MODE_APPRENTISSAGE:
+                ligne = ligne_partie(self.agent, self.summary.current_etape,
+                                     time.monotonic() - self.debut_partie)
+                print("Partie enregistrée dans " + enregistrer_partie(ligne))
 
     # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):
