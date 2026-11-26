@@ -8,6 +8,7 @@ from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, 
 
 from agent import Agent
 from historique import enregistrer_partie, ligne_partie
+from memoire_ia import memoriser_fin_de_partie, preparer_agent
 from environnement import Environment
 from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE, \
     RIGHT, DOWN, LEFT, UP, GAME_SPEED
@@ -175,6 +176,7 @@ class Game2048Window(Window):
             self.summary.add(self.agent.state_score, self.agent.getListActions())
             print(self.summary.show())
             if MODE_APPRENTISSAGE:
+                memoriser_fin_de_partie(self.agent)
                 ligne = ligne_partie(self.agent, self.summary.current_etape,
                                      time.monotonic() - self.debut_partie)
                 chemin, tentative = enregistrer_partie(ligne)
@@ -230,6 +232,9 @@ if __name__ == '__main__':
     # New
     plateaux = Environment(GAME_LENGHT)
     agent = Agent(plateaux)
+    if MODE_APPRENTISSAGE:
+        # Paramètres choisis d'après le CSV et Q-table rechargée (voir memoire_ia.py)
+        preparer_agent(agent)
     window = Game2048Window(agent)
     window.setup()
     run()

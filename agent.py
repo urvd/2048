@@ -1,4 +1,4 @@
-from game_params import MODE_APPRENTISSAGE, DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, REWARD_GOAL
+from game_params import MODE_APPRENTISSAGE
 from learning_policy import LearningPolicy
 
 
@@ -14,6 +14,9 @@ class Agent:
                                               game_lenght=self.environment.length)
         self.set()
         self.final_score = 0
+        # Mémoire entre les parties (voir memoire_ia.preparer_agent)
+        self.fichier_qtable = None        # None : Q-table non sauvegardée
+        self.choix_parametres = "defaut"  # defaut, meilleurs ou essai
     def set(self):
         self.state_score = 0
         self.last_action = None

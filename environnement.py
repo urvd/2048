@@ -8,6 +8,8 @@ from game_params import *
 class Environment:
     def __init__(self, length):
         self.length = length
+        # Récompenses de l'IA (lues dans game_params / .env), propres à cet environnement
+        self.recompenses = recompenses_par_defaut()
         self.set(length = self.length)
 
     def reset(self):
@@ -73,7 +75,7 @@ class Environment:
         return self._reward
 
     def is_current_reward_overloaded(self):
-        self._reward_noeffect_overload =  self._reward == REWARD_NO_EFFECT
+        self._reward_noeffect_overload =  self._reward == self.recompenses['no_effect']
         return self._reward_noeffect_overload
 
     def _generate_random_new_case(self):
@@ -134,14 +136,14 @@ class Environment:
                 self._reward = self.score
             else:
                 self.score = 0
-                self._reward = REWARD_NO_EFFECT
+                self._reward = self.recompenses['no_effect']
             if self.goal is True:
-                self._reward = REWARD_GOAL
+                self._reward = self.recompenses['goal']
             if self.count_empty_cases() == 0 and self.evaluate_when_game_over() is True:
                 if self.goal is True:
-                    self._reward = REWARD_GOAL
+                    self._reward = self.recompenses['goal']
                 else:
-                    self._reward = REWARD_GAMEOVER
+                    self._reward = self.recompenses['gameover']
                     self.gameOver = True
 
     def get_state(self):

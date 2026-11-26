@@ -25,6 +25,22 @@ REWARD_GOAL = int(os.getenv("REWARD_GOAL", "2048"))
 REWARD_GAMEOVER = int(os.getenv("REWARD_GAMEOVER", "-100"))
 REWARD_NO_EFFECT = int(os.getenv("REWARD_NO_EFFECT", "-8"))
 
+
+def recompenses_par_defaut():
+    """Récompenses de l'IA définies dans le .env (ou valeurs par défaut)."""
+    return {
+        "default": REWARD_DEFAULT,
+        "goal": REWARD_GOAL,
+        "gameover": REWARD_GAMEOVER,
+        "no_effect": REWARD_NO_EFFECT,
+    }
+
+#Mémoire de l'IA entre les parties
+# Approche 1 : choisir learning_rate et discount_factor d'après le CSV des parties
+OPTIMISER_PARAMETRES = os.getenv("OPTIMISER_PARAMETRES", "true").casefold() == "true"
+# Approche 2 : sauvegarder la Q-table en fin de partie et la recharger au lancement
+QTABLE_PERSISTANTE = os.getenv("QTABLE_PERSISTANTE", "true").casefold() == "true"
+
 # Game state schema
 '''    0 1 2 3
      0 | | | |
