@@ -51,16 +51,17 @@ TEXT_FINAL_XDIM = TEXT_CURRENT_YDIM = 480
 class Game2048Window(Window):
 
     def __init__(self, agent):
-        if agent.getStateLength() == 4:
-            width = SCREEN_WIDTH
-            height = SCREEN_HEIGHT
-        if agent.getStateLength() == 5:
-            width = SCREEN_WIDTH + 100
-            height = SCREEN_HEIGHT + 100
-        elif agent.getStateLength() == 3:
-            width = SCREEN_WIDTH
-            height = SCREEN_HEIGHT
+        length = agent.getStateLength()
+        if length < 2:
+            raise ValueError(f"Taille de grille invalide : {length} (minimum 2)")
+        # Mise en page calculée à partir de la taille : la grille occupe [100, grid_end]
+        # en x et en y, les scores sont au-dessus et les actions à droite.
+        # Pour une grille de 4, on retrouve la fenêtre d'origine de 800 x 700.
+        grid_end = (length + 1) * 100
+        width = max(SCREEN_WIDTH, grid_end + 300)
+        height = grid_end + 200
         super().__init__(width, height, SCREEN_TITLE)
+        self.grid_end = grid_end
         self.agent = agent
         self.state = self.agent.getState()
         self.length = self.agent.getStateLength()
@@ -74,13 +75,10 @@ class Game2048Window(Window):
         # Temps écoulé depuis le dernier coup de l'IA (remplace time.sleep)
         self.temps_depuis_coup = 0.0
 
-        self.extra_xpoint = 0
-        self.extra_ypoint = 0
-        if self.length == 5:
-           self.extra_xpoint = 100
-        elif self.length == 3:
-            self.extra_ypoint = 100
-            self.extra_xpoint = 100
+        # Positions des textes
+        self.text_top_y = height - 100
+        self.text_right_x = width - 320
+        self.action_x = grid_end + 50
 
     def setup(self):
         self._render_game_core()
@@ -91,18 +89,18 @@ class Game2048Window(Window):
 
     def _render_game_core(self):
         #render text : Element resumé du jeux
-        self._text(50 + self.extra_xpoint, 600 + self.extra_ypoint, "Tours : " + str(self.summary.current_tours + 1))
-        self._text(50 + self.extra_xpoint, 570 +  self.extra_ypoint, "Etape : " + str(self.summary.current_etape + 1))
-        self._text(480 + self.extra_xpoint, 600 + self.extra_ypoint, "Best score : " + str(self.agent.final_score))
-        self._text(480 + self.extra_xpoint, 570 + self.extra_ypoint, "Current score : " + str(self.agent.state_score))
+        self._text(50, self.text_top_y, "Tours : " + str(self.summary.current_tours + 1))
+        self._text(50, self.text_top_y - 30, "Etape : " + str(self.summary.current_etape + 1))
+        self._text(self.text_right_x, self.text_top_y, "Best score : " + str(self.agent.final_score))
+        self._text(self.text_right_x, self.text_top_y - 30, "Current score : " + str(self.agent.state_score))
         #render text : Action choisie par l'IA ou le joueur
         if self.agent.last_action is not None:
             action = self.agent.last_action
             actionText = ActionTextValue(action)
             actionPreviousText = ActionTextValue(self.agent.previous_action)
 
-            draw_text("Action : " + actionText, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
-            draw_text("Previous Action : " + actionPreviousText , 550 + self.extra_xpoint, 420 + self.extra_ypoint, color.BLACK, 16)
+            draw_text("Action : " + actionText, self.action_x, self.grid_end - 50, color.BLACK, 16)
+            draw_text("Previous Action : " + actionPreviousText , self.action_x, self.grid_end - 80, color.BLACK, 16)
 
         #render text : Aide des touches pour l'utilisateur
         aide = "Echap : quitter le jeu"
@@ -112,7 +110,7 @@ class Game2048Window(Window):
 
         #render text : Dans le cas ou l'IA trouve le 2048.
         if self.agent.found2048() is True:
-            draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 380 + self.extra_ypoint, color.RED, 16)
+            draw_text("2048 trouvé !!", self.action_x, self.grid_end - 120, color.RED, 16)
 
         for x in range(100, (self.length + 1)*100, 100):
             for y in range(100, (self.length + 1)*100, 100):
@@ -120,11 +118,7 @@ class Game2048Window(Window):
                 self._render_grille_case(x, y)
 
         # dernier ligne vertical: | && horizontal: --
-        extra_point = 500
-        if self.length == 5:
-           extra_point = 600
-        elif self.length == 3:
-            extra_point = 400
+        extra_point = self.grid_end
 
         draw_line(extra_point, 100, extra_point, extra_point, color.WHITE, 2)
         draw_line(100, extra_point, extra_point, extra_point, color.WHITE, 2)
