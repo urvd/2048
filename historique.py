@@ -5,7 +5,6 @@
 """
 import csv
 import os
-from datetime import datetime
 
 from game_params import GAME_SPEED
 
@@ -15,8 +14,6 @@ SEPARATEUR = ";"  # s'ouvre directement dans un Excel configuré en français
 COLONNES = [
     # Partie
     "tentative",
-    "date",
-    "heure",
     "taille_grille",
     "nb_etapes",
     "score_total",
@@ -45,10 +42,7 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
     environment = agent.environment
     policy = agent.learning_policy
     recompenses = environment.recompenses
-    maintenant = datetime.now()
     return {
-        "date": maintenant.strftime("%d/%m/%Y"),
-        "heure": maintenant.strftime("%H:%M:%S"),
         "taille_grille": environment.length,
         "nb_etapes": nb_etapes,
         "score_total": agent.state_score,
