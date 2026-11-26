@@ -14,7 +14,8 @@ SEPARATEUR = ";"  # s'ouvre directement dans un Excel configuré en français
 
 COLONNES = [
     # Partie
-    "date_heure",
+    "date",
+    "heure",
     "taille_grille",
     "nb_etapes",
     "score_total",
@@ -40,8 +41,10 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
     """Construit la ligne CSV d'une partie terminée."""
     environment = agent.environment
     policy = agent.learning_policy
+    maintenant = datetime.now()
     return {
-        "date_heure": datetime.now().isoformat(timespec="seconds"),
+        "date": maintenant.strftime("%d/%m/%Y"),
+        "heure": maintenant.strftime("%H:%M:%S"),
         "taille_grille": environment.length,
         "nb_etapes": nb_etapes,
         "score_total": agent.state_score,
