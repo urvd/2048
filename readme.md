@@ -1,5 +1,5 @@
 # Installation
-    pip install -r requirements.txt   # arcade 3.x
+    pip install -r requirements.txt   # arcade 3.x, python-dotenv
 
 # Pour Lancer le jeux
     python main_2048.py
@@ -26,7 +26,15 @@ Vous pouvez manipuler les valeurs suivantes dans le fichier game_params.py :
 - MODE_APPRENTISSAGE: pour jouer en manuel ou apprentisge
 
 # Mémoire de l'IA entre les parties (mode apprentissage)
-Variables d'environnement (fichier .env local, chargé avec `set -a; . ./.env; set +a`) :
+Variables d'environnement, à mettre dans un fichier .env à la racine du projet (chargé automatiquement
+au lancement grâce à python-dotenv ; une variable définie dans le terminal reste prioritaire).
+Valeurs oui/non acceptées : true, True, 1, oui, yes, vrai.
+Exemple de .env :
+
+    MODE_APPRENTISSAGE=true
+    OPTIMISER_PARAMETRES=true
+    QTABLE_PERSISTANTE=true
+
 - OPTIMISER_PARAMETRES (true par défaut) : learning_rate et discount_factor sont repris de la meilleure
   tentative du CSV (même taille de grille, mêmes récompenses), avec 1 essai de valeurs voisines sur 5.
   Les récompenses ne changent jamais : ce sont celles du .env.
