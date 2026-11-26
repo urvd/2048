@@ -66,7 +66,7 @@ class Agent:
             if not init:
                 self.start = False
                 self.learning_policy.update(previous_state=self.environment.get_pre_state(), \
-                                            state=self.environment.get_state(), last_action=self.last_action, \
+                                            state=self.environment.get_state(), last_action=action, \
                                             reward=self.environment.get_current_reward())
             self.last_action = action
     def update_best_score(self):
