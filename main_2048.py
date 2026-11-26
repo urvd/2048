@@ -103,7 +103,7 @@ class Game2048Window(Window):
         #render text : Aide des touches pour l'utilisateur
         aide = "Echap : quitter le jeu"
         if not MODE_APPRENTISSAGE:
-            aide = "Flèches : jouer   |   " + aide
+            aide += ". Flèches : Fusionner et décaler les cases" + aide
         draw_text(aide, 100, 40, color.BLACK, 14)
 
         #render text : Dans le cas ou l'IA trouve le 2048.
