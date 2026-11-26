@@ -1,7 +1,7 @@
 import os, random
 
 # si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE") == "True"
+MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE", "false").casefold() == "true"
 #ACTION_WITH_HASARD = True
 
 #Paramètres de l'IA par renforcement
@@ -9,7 +9,7 @@ MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE") == "True"
 DEFAULT_LEARNING_RATE = 0.01
 DEFAULT_DISCOUNT_FACTOR = 0.2
 
-GAME_SPEED = 1.05
+GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))
 GAME_LENGHT = 4
 IA_NB_TOURS = 5
 

@@ -99,9 +99,15 @@ class Game2048Window(Window):
 
             draw_text("Action : " + actionText, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
             draw_text("Previous Action : " + actionPreviousText , 550 + self.extra_xpoint, 420 + self.extra_ypoint, color.BLACK, 16)
-        
-        #render text : Dans lec as ou l'IA trouve le 2048.
-        if self.agent.found2048 is True:
+
+        #render text : Aide des touches pour l'utilisateur
+        aide = "Echap : quitter le jeu"
+        if not MODE_APPRENTISSAGE:
+            aide = "Flèches : jouer   |   " + aide
+        draw_text(aide, 100, 40, color.BLACK, 14)
+
+        #render text : Dans le cas ou l'IA trouve le 2048.
+        if self.agent.found2048() is True:
             draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_ypoint, color.RED, 16)
 
         for x in range(100, (self.length + 1)*100, 100):
