@@ -49,18 +49,19 @@ class ActionImpl:
         self.current_states = current_states
         self.lenght = lenght
         self.score = 0
-        self.apply_action()
         self.no_mergable_case = True
+        self.apply_action()
     def get_states(self):
         return self.current_states
     def get_score(self):
         return self.score
 
+    # Méthodes à implémenter par chaque direction (Up, Down, Left, Right)
     def _merge_states(self):
-        self._merge_states()
-        
+        raise NotImplementedError
+
     def _decale_states(self):
-        self._decale_states()
+        raise NotImplementedError
 
     def apply_action(self):
         # decaler

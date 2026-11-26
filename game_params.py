@@ -1,19 +1,31 @@
+import os
 import random
 
-# si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = True
-ACTION_WITH_HASARD = True
-#Paramètres de l'IA par renforcement
-# learning param
-DEFAULT_LEARNING_RATE = 0.01
-DEFAULT_DISCOUNT_FACTOR = 0.2
-
-GAME_SPEED = 1.05
+#game parameters
+GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))
 GAME_LENGHT = 4
 IA_NB_TOURS = 5
 
+ # si false on peut passer on peut jouer en mode joueur
+MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE", "false").casefold() == "true"
+#ACTION_WITH_HASARD = True
 
-#game state schema
+#Paramètres de l'IA par renforcement
+## learning param
+DEFAULT_LEARNING_RATE = 0.01
+DEFAULT_DISCOUNT_FACTOR = 0.2
+
+
+
+##IA game reward
+ # score state
+REWARD_DEFAULT = int(os.getenv("REWARD_DEFAULT", "1"))
+
+REWARD_GOAL = int(os.getenv("REWARD_GOAL", "2048"))
+REWARD_GAMEOVER = int(os.getenv("REWARD_GAMEOVER", "-100"))
+REWARD_NO_EFFECT = int(os.getenv("REWARD_NO_EFFECT", "-8"))
+
+# Game state schema
 '''    0 1 2 3
      0 | | | |
      1 | | | | 
@@ -22,7 +34,7 @@ IA_NB_TOURS = 5
      
      | = {2^0, ....2^11}
 '''
-# actions values
+# Actions values
 UP = 'U'
 DOWN = 'D'
 LEFT = 'L'
@@ -30,18 +42,12 @@ RIGHT = 'R'
 ACTIONS = ['U', 'D', 'L', 'R']
 #OTHER_ACTIONS = ['Y'N'] # N = no action
 
-#game reward
 
-REWARD_GOAL = 2048
-
-REWARD_DEFAULT = 1 # score state
-REWARD_GAMEOVER = -100
-REWARD_NO_EFFECT = -8
 
 # LIST_ACTIONS_EXEMPLE = [UP, UP, UP, DOWN, LEFT, RIGHT, LEFT, DOWN, UP]
 
-#Generer Aleatoirement
-GENERATED_VALUES = [2, 4] 
+# Game generated  values
+GENERATED_VALUES = [2, 4]
 #TODO: Générer aléatoirement avec une fréquence plus importante pour le 2 ?
 
     #Generer Aleatoirement la valeur entre les nombres de la liste GENERATED_VALUES
