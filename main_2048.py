@@ -157,6 +157,7 @@ class Game2048Window(Window):
             self.summary.current_etape = 0
             self.summary.current_tours += 1
             print(self.summary.show())
+            time.sleep(3.0)
             self.agent.reset()
         else:
             if MODE_APPRENTISSAGE:
@@ -189,7 +190,7 @@ class Game2048Window(Window):
                 if not self._state_not_changed():
                     self.summary.current_etape += 1
         if k == key.ESCAPE:
-            #TODO : register data in a file or DB for analysis if succes or fail
+            #TODO : register data in a file or DB for analysis either if succes or fail
             if not self.agent.continue_game():
                 self.summary.add(self.agent.state_score, self.agent.getListActions())
                 print(self.summary.show())

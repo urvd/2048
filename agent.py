@@ -48,10 +48,12 @@ class Agent:
                                                                 start=self.start)
             self.environment.apply(action)
 
-            self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
+
         else:
             self.last_action = keyName
             self.environment.apply(self.last_action)
+
+        self.continu = self.environment.goal is False or self.environment.gameOver is False
         # print('#Action: ', self.last_action, '\n')
         self.state_score += self.environment.score
         #self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER

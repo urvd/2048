@@ -1,8 +1,9 @@
-import random
+import os, random
 
 # si false on peut passer on peut jouer en mode joueur
-MODE_APPRENTISSAGE = True
-ACTION_WITH_HASARD = True
+MODE_APPRENTISSAGE = os.getenv("MODE_APPRENTISSAGE") == "True"
+#ACTION_WITH_HASARD = True
+
 #Paramètres de l'IA par renforcement
 # learning param
 DEFAULT_LEARNING_RATE = 0.01

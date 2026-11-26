@@ -21,6 +21,7 @@ class Environment:
         self._reward = 0
         self._reward_noeffect_overload = 0
         self.goal = False
+        self.gameOver = False
         print('2048 de taille ' + str(length))
         c1_init = Case(randomXY(length), randomXY(length), 2)
         c2_init = Case(randomXY(length), randomXY(length), 2)
@@ -72,11 +73,7 @@ class Environment:
         return self._reward
 
     def is_current_reward_overloaded(self):
-        if self._reward == REWARD_NO_EFFECT:
-            self._reward_noeffect_overload = True
-        else:
-            self._reward_noeffect_overload = False
-
+        self._reward_noeffect_overload =  self._reward == REWARD_NO_EFFECT
         return self._reward_noeffect_overload
 
     def _generate_random_new_case(self):
@@ -140,10 +137,13 @@ class Environment:
                 self._reward = REWARD_NO_EFFECT
             if self.goal is True:
                 self._reward = REWARD_GOAL
-            if self.count_empty_cases() == 0 and self.evaluate_when_game_over():
-                self._reward = REWARD_GAMEOVER
+            if self.count_empty_cases() == 0 and self.evaluate_when_game_over() is True:
+                
                 if self.goal is True:
                     self._reward = REWARD_GOAL
+                else:
+                    self._reward = REWARD_GAMEOVER
+                    self.gameOver = True
 
     def get_state(self):
         res = ''
