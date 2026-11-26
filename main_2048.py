@@ -26,6 +26,7 @@ class Summary:
         self.scores.append(score)
         self.chain_actions.append(chain_actions)
 
+    #TODO: Optimisé lorsque le jeux est reset
     # Affichage  du résume si affichage console   
     def show(self):
         res = ''
@@ -99,9 +100,15 @@ class Game2048Window(Window):
 
             draw_text("Action : " + actionText, 550 + self.extra_xpoint, 450 + self.extra_ypoint, color.BLACK, 16)
             draw_text("Previous Action : " + actionPreviousText , 550 + self.extra_xpoint, 420 + self.extra_ypoint, color.BLACK, 16)
-        
-        #render text : Dans lec as ou l'IA trouve le 2048.
-        if self.agent.found2048 is True:
+
+        #render text : Aide des touches pour l'utilisateur
+        aide = "Echap : quitter le jeu"
+        if not MODE_APPRENTISSAGE:
+            aide = "Flèches : Fusionner et décaler les cases | " + aide
+        draw_text(aide, 100, 40, color.BLACK, 14)
+
+        #render text : Dans le cas ou l'IA trouve le 2048.
+        if self.agent.found2048() is True:
             draw_text("2048 trouvé !!", 550 + self.extra_xpoint, 550 - self.extra_ypoint, color.RED, 16)
 
         for x in range(100, (self.length + 1)*100, 100):
@@ -150,14 +157,14 @@ class Game2048Window(Window):
                 self.agent.do(prev_keyName=self.agent.last_action)
             time.sleep(GAME_SPEED)
 
-        self.state = self.agent.getState()
-
+        #self.state = self.agent.getState()
+        #Si le jeux terminé alors figer le jeux avec le résultat obtenu et attendre 
+        #instruction utilisateur pour quitter le jeux ou réinitialiser le jeux.
         if not self.agent.continue_game():
+            self.agent.current_game_not_first_tour(self.summary.current_tours)
             self.summary.add(self.agent.state_score, self.agent.getListActions())
-            self.summary.current_etape = 0
-            self.summary.current_tours += 1
             print(self.summary.show())
-            self.agent.reset()
+            
         else:
             if MODE_APPRENTISSAGE:
                 if not self._state_not_changed():
@@ -174,13 +181,11 @@ class Game2048Window(Window):
             if k == key.DOWN:
                 self.key_pressed = DOWN
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
-                states_changed = self.agent.environment.states_not_changed();
                 if not self._state_not_changed():
                     self.summary.current_etape += 1
             if k == key.LEFT:
                 self.key_pressed = LEFT
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
-                states_changed = self.agent.environment.states_not_changed();
                 if not self._state_not_changed():
                     self.summary.current_etape += 1
             if k == key.RIGHT:
@@ -188,12 +193,27 @@ class Game2048Window(Window):
                 self.agent.do(keyName=self.key_pressed, prev_keyName=self.agent.last_action)
                 if not self._state_not_changed():
                     self.summary.current_etape += 1
+        #Quitter            
         if k == key.ESCAPE:
-            #TODO : register data in a file or DB for analysis if succes or fail
+            #TODO : register data in a file or DB for analysis either if succes or fail
             if not self.agent.continue_game():
                 self.summary.add(self.agent.state_score, self.agent.getListActions())
                 print(self.summary.show())
             self.close()
+
+        #Reset le jeux manuellement pour le Joueur  
+        if k == key.N and not MODE_APPRENTISSAGE:
+            self.agent.reset()
+            self.summary.current_etape = 0
+            #self.state = self.agent.getState()
+            print(f"Jeu réinitialisé ! {self.summary.nb_tours} tours joués. Score final: {self.agent.final_score}.")
+            if not self.agent.continue_game():
+                self.summary.current_etape = 0
+                self.summary.current_tours += 1
+            else:
+                print(f"Jeu réinitialisé ! {self.summary.nb_tours} tours joués. Score final: {self.agent.final_score}.")
+                self.summary = Summary(IA_NB_TOURS)
+
 
     def _state_not_changed(self):
         return self.agent.environment.states_not_changed()   
