@@ -32,8 +32,7 @@ class Agent:
         return self.continu
 
     def reset(self):
-        if self.state_score > self.final_score:
-            self.final_score = self.state_score
+        self.update_best_score()
         self.set()
         self.environment.reset()
 
@@ -55,7 +54,8 @@ class Agent:
             self.last_action = keyName
             self.environment.apply(self.last_action)
 
-        self.continu = self.environment.goal is False or self.environment.gameOver is False
+        # La partie continue tant qu'il n'y a ni victoire (2048) ni défaite
+        self.continu = not self.environment.goal and not self.environment.gameOver
         # print('#Action: ', self.last_action, '\n')
         self.state_score += self.environment.score
         #self.continu = self.environment.get_current_reward() != REWARD_GAMEOVER
@@ -69,8 +69,8 @@ class Agent:
                                             state=self.environment.get_state(), last_action=self.last_action, \
                                             reward=self.environment.get_current_reward())
             self.last_action = action
-    def current_game_not_first_tour(self, tour):
-        if tour == 1:
+    def update_best_score(self):
+        if self.state_score > self.final_score:
             self.final_score = self.state_score
 
     def getListActions(self):
