@@ -39,26 +39,26 @@ def partie(score, learning_rate, discount_factor, taille=4, gameover=-100):
 class ChoixParametresTest(unittest.TestCase):
     def test_sans_historique_valeurs_par_defaut(self):
         self.assertEqual(memoire_ia.choisir_parametres([], 4, RECOMPENSES, RngFixe(0.9)),
-                         (DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, "defaut"))
+                         (DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, RECOMPENSES, "defaut"))
 
     def test_reprend_la_meilleure_tentative(self):
-        parties = [partie(500, 0.01, 0.2), partie(1800, 0.05, 0.5), partie(900, 0.1, 0.3)]
+        parties = [partie(500, 0.01, 0.2), partie(1800, 0.05, 0.5, gameover=-50), partie(900, 0.1, 0.3)]
         self.assertEqual(memoire_ia.choisir_parametres(parties, 4, RECOMPENSES, RngFixe(0.9)),
-                         (0.05, 0.5, "meilleurs"))
+                         (0.05, 0.5, dict(RECOMPENSES, gameover=-50), "meilleurs"))
 
     def test_essai_de_parametres_voisins(self):
         parties = [partie(1800, 0.05, 0.5)]
+        # RngFixe.choice prend le 1er élément : learning_rate x0.5, discount -0.1, goal x0.5
         self.assertEqual(memoire_ia.choisir_parametres(parties, 4, RECOMPENSES, RngFixe(0.1)),
-                         (0.025, 0.4, "essai"))
+                         (0.025, 0.4, dict(RECOMPENSES, goal=1024), "essai"))
 
-    def test_ignore_les_parties_d_un_autre_contexte(self):
-        parties = [partie(9999, 0.9, 0.9, taille=3), partie(9999, 0.8, 0.8, gameover=-50),
-                   partie(100, 0.02, 0.3)]
+    def test_ignore_les_parties_d_une_autre_taille(self):
+        parties = [partie(9999, 0.9, 0.9, taille=3), partie(100, 0.02, 0.3)]
         self.assertEqual(memoire_ia.choisir_parametres(parties, 4, RECOMPENSES, RngFixe(0.9)),
-                         (0.02, 0.3, "meilleurs"))
+                         (0.02, 0.3, RECOMPENSES, "meilleurs"))
 
     def test_essai_reste_dans_les_bornes(self):
-        lr, df, _ = memoire_ia.choisir_parametres([partie(10, 0.001, 0.0)], 4, RECOMPENSES, RngFixe(0.1))
+        lr, df, _, _ = memoire_ia.choisir_parametres([partie(10, 0.001, 0.0)], 4, RECOMPENSES, RngFixe(0.1))
         self.assertGreaterEqual(lr, memoire_ia.LEARNING_RATE_MIN)
         self.assertGreaterEqual(df, memoire_ia.DISCOUNT_FACTOR_MIN)
 
@@ -86,6 +86,25 @@ class QTablePersistanteTest(unittest.TestCase):
         self.assertEqual(nb_etats, len(agent.learning_policy.qtable))
         for etat, valeurs in agent.learning_policy.qtable.items():
             self.assertEqual(nouvel_agent.learning_policy.qtable[etat], valeurs)
+
+    def test_recompenses_changees_qtable_remise_a_zero(self):
+        chemin = os.path.join(self.dossier, "qtable.json")
+        agent = self._agent()
+        memoire_ia.sauvegarder_qtable(agent.learning_policy, chemin, 3, RECOMPENSES)
+        nouvel_agent = agent_module.Agent(Environment(3))
+        nb_etats = memoire_ia.charger_qtable(nouvel_agent.learning_policy, chemin,
+                                             dict(RECOMPENSES, gameover=-50))
+        self.assertEqual(nb_etats, 0)
+        self.assertEqual(len(nouvel_agent.learning_policy.qtable), 1)  # seulement l'état initial
+
+    def test_preparer_applique_les_recompenses_choisies(self):
+        chemin_parties = os.path.join(self.dossier, "parties.csv")
+        agent = self._agent()
+        agent.environment.recompenses = dict(RECOMPENSES, gameover=-50)
+        enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
+        nouvel_agent = agent_module.Agent(Environment(3))
+        memoire_ia.preparer_agent(nouvel_agent, True, False, chemin_parties, RngFixe(0.9))
+        self.assertEqual(nouvel_agent.environment.recompenses["gameover"], -50)
 
     def test_preparer_puis_memoriser(self):
         chemin_qtable = os.path.join(self.dossier, "qtable.json")

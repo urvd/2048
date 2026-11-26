@@ -1,12 +1,13 @@
-"""Mémoire de l'IA d'une partie à l'autre (option A).
+"""Mémoire de l'IA d'une partie à l'autre (option B).
 
-Approche 1 (OPTIMISER_PARAMETRES) : learning_rate et discount_factor sont choisis
-d'après le CSV des parties. On reprend ceux de la meilleure tentative et, de temps en
-temps, on essaie des valeurs voisines pour découvrir de meilleurs réglages.
-Les récompenses ne sont jamais modifiées : elles restent celles du .env.
+Approche 1 (OPTIMISER_PARAMETRES) : learning_rate, discount_factor ET les récompenses
+sont choisis d'après le CSV des parties. On reprend ceux de la meilleure tentative et,
+de temps en temps, on essaie des valeurs voisines pour découvrir de meilleurs réglages.
+Sans historique, les récompenses sont celles du .env.
 
 Approche 2 (QTABLE_PERSISTANTE) : la Q-table est sauvegardée en fin de partie dans un
-fichier JSON local et rechargée au lancement suivant.
+fichier JSON local et rechargée au lancement suivant, SAUF si les récompenses ont changé :
+ses valeurs n'auraient plus la même échelle, l'IA repart alors d'une Q-table vide.
 """
 import json
 import os
@@ -20,6 +21,8 @@ from historique import lire_parties
 TAUX_ESSAI = 0.2
 LEARNING_RATE_MIN, LEARNING_RATE_MAX = 0.001, 1.0
 DISCOUNT_FACTOR_MIN, DISCOUNT_FACTOR_MAX = 0.0, 0.99
+# Récompenses que l'optimisation peut modifier (reward_default n'est pas utilisée par le jeu)
+RECOMPENSES_OPTIMISEES = ("goal", "gameover", "no_effect")
 
 
 def fichier_qtable(taille):
@@ -39,14 +42,19 @@ def sauvegarder_qtable(policy, chemin, taille, recompenses):
 
 
 def charger_qtable(policy, chemin, recompenses):
-    """Recharge la Q-table sauvegardée. Renvoie le nombre d'états chargés."""
+    """Recharge la Q-table sauvegardée. Renvoie le nombre d'états chargés.
+
+    Si elle a été apprise avec d'autres récompenses, elle n'est pas rechargée (option B) :
+    l'IA repart d'une Q-table vide, qui remplacera l'ancienne en fin de partie.
+    """
     if not os.path.exists(chemin):
         return 0
     with open(chemin, encoding="utf-8") as fichier:
         donnees = json.load(fichier)
     if donnees.get("recompenses") != recompenses:
-        print(f"Attention : {chemin} a été appris avec d'autres récompenses "
-              f"({donnees.get('recompenses')}). Elle est rechargée quand même (option A).")
+        print(f"Récompenses changées depuis la dernière sauvegarde ({donnees.get('recompenses')}) : "
+              f"la Q-table de {chemin} est remise à zéro.")
+        return 0
     for etat, valeurs in donnees.get("qtable", {}).items():
         policy.qtable[etat] = {action: float(q) for action, q in valeurs.items()}
     return len(donnees.get("qtable", {}))
@@ -54,21 +62,26 @@ def charger_qtable(policy, chemin, recompenses):
 
 # --- Approche 1 : paramètres choisis d'après le CSV ------------------------------------
 
-def _meme_contexte(partie, taille, recompenses):
-    """La partie a-t-elle été jouée avec la même taille de grille et les mêmes récompenses ?"""
+def _recompenses_de(partie):
+    return {cle: int(partie["reward_" + cle]) for cle in ("default", "goal", "gameover", "no_effect")}
+
+
+def _comparable(partie, taille):
+    """Partie jouée sur la même taille de grille, avec des colonnes lisibles ?"""
     try:
-        return (int(partie["taille_grille"]) == taille
-                and int(partie["reward_default"]) == recompenses["default"]
-                and int(partie["reward_goal"]) == recompenses["goal"]
-                and int(partie["reward_gameover"]) == recompenses["gameover"]
-                and int(partie["reward_no_effect"]) == recompenses["no_effect"])
+        float(partie["score_total"]), float(partie["learning_rate"]), float(partie["discount_factor"])
+        _recompenses_de(partie)
+        return int(partie["taille_grille"]) == taille
     except (KeyError, TypeError, ValueError):
         return False
 
 
-def meilleure_partie(parties, taille, recompenses):
-    """Partie au meilleur score parmi celles jouées dans le même contexte (None s'il n'y en a pas)."""
-    comparables = [p for p in parties if _meme_contexte(p, taille, recompenses)]
+def meilleure_partie(parties, taille):
+    """Partie au meilleur score sur la même taille de grille (None s'il n'y en a pas).
+
+    Le score du jeu ne dépend pas des récompenses : on compare donc toutes les parties.
+    """
+    comparables = [p for p in parties if _comparable(p, taille)]
     return max(comparables, key=lambda p: float(p["score_total"]), default=None)
 
 
@@ -76,20 +89,26 @@ def _borner(valeur, minimum, maximum):
     return round(min(max(valeur, minimum), maximum), 4)
 
 
-def choisir_parametres(parties, taille, recompenses, rng=random):
-    """Renvoie (learning_rate, discount_factor, choix) avec choix = defaut, meilleurs ou essai."""
-    meilleure = meilleure_partie(parties, taille, recompenses)
+def choisir_parametres(parties, taille, recompenses_env, rng=random):
+    """Renvoie (learning_rate, discount_factor, recompenses, choix).
+
+    choix vaut defaut (pas d'historique : valeurs du .env), meilleurs ou essai.
+    """
+    meilleure = meilleure_partie(parties, taille)
     if meilleure is None:
-        return DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, "defaut"
+        return DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, dict(recompenses_env), "defaut"
     learning_rate = float(meilleure["learning_rate"])
     discount_factor = float(meilleure["discount_factor"])
+    recompenses = _recompenses_de(meilleure)
     if rng.random() >= TAUX_ESSAI:
-        return learning_rate, discount_factor, "meilleurs"
-    # Essai : un paramètre voisin pour explorer d'autres réglages
+        return learning_rate, discount_factor, recompenses, "meilleurs"
+    # Essai : paramètres voisins et une récompense modifiée pour explorer d'autres réglages
     learning_rate = _borner(learning_rate * rng.choice([0.5, 2.0]), LEARNING_RATE_MIN, LEARNING_RATE_MAX)
     discount_factor = _borner(discount_factor + rng.choice([-0.1, 0.1]), DISCOUNT_FACTOR_MIN,
                               DISCOUNT_FACTOR_MAX)
-    return learning_rate, discount_factor, "essai"
+    cle = rng.choice(RECOMPENSES_OPTIMISEES)
+    recompenses[cle] = int(recompenses[cle] * rng.choice([0.5, 2.0])) or recompenses[cle]
+    return learning_rate, discount_factor, recompenses, "essai"
 
 
 # --- Points d'entrée utilisés par le jeu ------------------------------------------------
@@ -100,10 +119,11 @@ def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PER
     environment = agent.environment
     policy = agent.learning_policy
     if optimiser:
-        policy.learning_rate, policy.discount_factor, agent.choix_parametres = choisir_parametres(
-            lire_parties(chemin_parties), environment.length, environment.recompenses, rng)
+        (policy.learning_rate, policy.discount_factor, environment.recompenses,
+         agent.choix_parametres) = choisir_parametres(lire_parties(chemin_parties), environment.length,
+                                                      environment.recompenses, rng)
     print(f"Paramètres de l'IA ({agent.choix_parametres}) : learning_rate={policy.learning_rate}, "
-          f"discount_factor={policy.discount_factor}")
+          f"discount_factor={policy.discount_factor}, récompenses={environment.recompenses}")
     if persistante:
         agent.fichier_qtable = fichier_qtable(environment.length)
         nb_etats = charger_qtable(policy, agent.fichier_qtable, environment.recompenses)
