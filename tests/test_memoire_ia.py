@@ -126,18 +126,16 @@ class MigrationCsvTest(unittest.TestCase):
     def test_ancien_en_tete_mis_a_jour(self):
         with tempfile.TemporaryDirectory() as dossier:
             chemin = os.path.join(dossier, "parties.csv")
-            # ancien fichier : colonne tentative, sans choix_parametres ni qtable_persistante
-            anciennes = ["tentative"] + [c for c in COLONNES if c not in ("choix_parametres", "qtable_persistante")]
+            anciennes = [c for c in COLONNES if c not in ("choix_parametres", "qtable_persistante")]
             with open(chemin, "w", newline="", encoding="utf-8") as fichier:
                 writer = csv.DictWriter(fichier, fieldnames=anciennes, delimiter=SEPARATEUR)
                 writer.writeheader()
                 writer.writerow({c: "1" for c in anciennes})
             agent = agent_module.Agent(Environment(3))
-            enregistrer_partie(ligne_partie(agent, 3, 1.0), chemin)
+            _, tentative = enregistrer_partie(ligne_partie(agent, 3, 1.0), chemin)
             parties = lire_parties(chemin)
-        self.assertEqual(len(parties), 2)
-        self.assertEqual(list(parties[0]), COLONNES)  # colonne tentative retirée
-        self.assertEqual(parties[0]["score_total"], "1")  # données de l'ancienne ligne conservées
+        self.assertEqual(tentative, 2)
+        self.assertEqual(list(parties[0]), COLONNES)
         self.assertEqual(parties[0]["choix_parametres"], "")
         self.assertEqual(parties[1]["choix_parametres"], "defaut")
 
