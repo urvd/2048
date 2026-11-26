@@ -179,8 +179,8 @@ class Game2048Window(Window):
                 memoriser_fin_de_partie(self.agent)
                 ligne = ligne_partie(self.agent, self.summary.current_etape,
                                      time.monotonic() - self.debut_partie)
-                chemin, tentative = enregistrer_partie(ligne)
-                print(f"Tentative {tentative} enregistrée dans {chemin}")
+                print(f"Partie du {ligne['date']} à {ligne['heure']} enregistrée dans "
+                      f"{enregistrer_partie(ligne)}")
 
     # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):
