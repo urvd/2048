@@ -8,6 +8,7 @@
 
 # Tests
     python tests/smoke_logic.py
+    python -m unittest discover -s tests
 
 # Description
     main_2048.py: impl du jeux et adaption 3D

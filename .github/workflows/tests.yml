@@ -22,5 +22,7 @@ jobs:
         run: python -m compileall -q -x '(^|/)venv/' .
       - name: Logique du jeu
         run: python tests/smoke_logic.py
+      - name: Tests unitaires
+        run: python -m unittest discover -s tests -v
       - name: Import de l'interface arcade
         run: python -c "import main_2048"
