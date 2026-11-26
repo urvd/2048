@@ -87,6 +87,29 @@ class QTablePersistanteTest(unittest.TestCase):
         for etat, valeurs in agent.learning_policy.qtable.items():
             self.assertEqual(nouvel_agent.learning_policy.qtable[etat], valeurs)
 
+    def test_une_qtable_par_jeu_de_recompenses(self):
+        chemin_parties = os.path.join(self.dossier, "parties.csv")
+        base = os.path.join(self.dossier, "qtable.json")
+        autres = dict(RECOMPENSES, gameover=-50)
+        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": base}):
+            self.assertNotEqual(memoire_ia.fichier_qtable(3, RECOMPENSES), memoire_ia.fichier_qtable(3, autres))
+            # partie avec les récompenses du .env, puis partie d'essai avec d'autres récompenses
+            for recompenses in (RECOMPENSES, autres):
+                agent = agent_module.Agent(Environment(3))
+                agent.environment.recompenses = dict(recompenses)
+                memoire_ia.preparer_agent(agent, optimiser=False, persistante=True)
+                self._agent_prepare(agent)
+                memoire_ia.memoriser_fin_de_partie(agent)
+                if recompenses == RECOMPENSES:
+                    etats_env = set(agent.learning_policy.qtable)
+            # retour aux récompenses du .env : la Q-table d'origine est intacte
+            agent = agent_module.Agent(Environment(3))
+            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True)
+        # tous les états appris avec ces récompenses sont retrouvés (+ la grille de départ du nouvel agent)
+        self.assertTrue(etats_env <= set(agent.learning_policy.qtable))
+        self.assertLessEqual(len(agent.learning_policy.qtable), len(etats_env) + 1)
+        self.assertEqual(len([f for f in os.listdir(self.dossier) if f.endswith(".json")]), 2)
+
     def test_recompenses_changees_qtable_remise_a_zero(self):
         chemin = os.path.join(self.dossier, "qtable.json")
         agent = self._agent()

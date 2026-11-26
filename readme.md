@@ -27,9 +27,11 @@ Vous pouvez manipuler les valeurs suivantes dans le fichier game_params.py :
 
 # Mémoire de l'IA entre les parties (mode apprentissage)
 Variables d'environnement (fichier .env local, chargé avec `set -a; . ./.env; set +a`) :
-- OPTIMISER_PARAMETRES (true par défaut) : learning_rate et discount_factor sont repris de la meilleure
-  tentative du CSV (même taille de grille, mêmes récompenses), avec 1 essai de valeurs voisines sur 5.
-  Les récompenses ne changent jamais : ce sont celles du .env.
+- OPTIMISER_PARAMETRES (true par défaut) : learning_rate, discount_factor et les récompenses sont
+  repris de la meilleure tentative du CSV (même taille de grille). Une fois sur 5, l'IA essaie des
+  valeurs voisines et modifie une récompense (goal, gameover ou no_effect, x0.5 ou x2).
+  Sans historique, ce sont les valeurs du .env.
 - QTABLE_PERSISTANTE (true par défaut) : la Q-table est sauvegardée en fin de partie dans
-  qtable_<taille>x<taille>.json et rechargée au lancement suivant.
+  qtable_<taille>x<taille>_d<default>_g<goal>_o<gameover>_n<no_effect>.json (une Q-table par
+  jeu de récompenses) et rechargée au lancement suivant.
 - FICHIER_PARTIES_IA (parties_ia.csv) et FICHIER_QTABLE : chemins des fichiers, ignorés par git.
