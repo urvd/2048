@@ -1,13 +1,13 @@
 # import math
 # from sklearn.neural_network import MLPRegressor
 # import numpy as np
-from game_params import generateDefaultAction, DEFAULT_LEARNING_RATE, \
-    DEFAULT_DISCOUNT_FACTOR
+from game_params import generateDefaultAction, LEARNING_RATE, \
+    DISCOUNT_FACTOR
 
 
 class LearningPolicy: #Q-table
-    def __init__(self, states_sign, actions, game_lenght, learning_rate=DEFAULT_LEARNING_RATE,
-                 discount_factor=DEFAULT_DISCOUNT_FACTOR):
+    def __init__(self, states_sign, actions, game_lenght, learning_rate=LEARNING_RATE,
+                 discount_factor=DISCOUNT_FACTOR):
         # Q-table indexée directement par la signature de l'état : accès en O(1)
         # et aucune limite sur le nombre d'états rencontrés.
         self.qtable = {}

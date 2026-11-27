@@ -13,7 +13,7 @@ import json
 import os
 import random
 
-from game_params import (DEFAULT_DISCOUNT_FACTOR, DEFAULT_LEARNING_RATE, OPTIMISER_PARAMETRES,
+from game_params import (DISCOUNT_FACTOR, LEARNING_RATE, OPTIMISER_PARAMETRES,
                          QTABLE_PERSISTANTE)
 from historique import lire_parties
 
@@ -96,7 +96,7 @@ def choisir_parametres(parties, taille, recompenses_env, rng=random):
     """
     meilleure = meilleure_partie(parties, taille)
     if meilleure is None:
-        return DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, dict(recompenses_env), "defaut"
+        return LEARNING_RATE, DISCOUNT_FACTOR, dict(recompenses_env), "defaut"
     learning_rate = float(meilleure["learning_rate"])
     discount_factor = float(meilleure["discount_factor"])
     recompenses = _recompenses_de(meilleure)
@@ -137,3 +137,21 @@ def memoriser_fin_de_partie(agent):
         sauvegarder_qtable(agent.learning_policy, agent.fichier_qtable, environment.length,
                            environment.recompenses)
         print(f"Q-table sauvegardée : {len(agent.learning_policy.qtable)} états dans {agent.fichier_qtable}")
+
+
+def nouvelle_partie(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PERSISTANTE,
+                    chemin_parties=None, rng=random):
+    """Prépare la partie suivante quand l'IA enchaîne plusieurs parties (NB_TOURS_MAX).
+
+    À appeler après agent.reset() : les paramètres sont choisis à nouveau d'après le CSV,
+    qui contient maintenant la partie qui vient de se terminer. Avec une Q-table persistante,
+    elle est rechargée depuis le fichier sauvegardé en fin de partie ; sinon l'IA garde en
+    mémoire ce qu'elle a appris depuis le lancement (tant que les récompenses ne changent pas).
+    """
+    policy = agent.learning_policy
+    recompenses_avant = dict(agent.environment.recompenses)
+    qtable_en_memoire = policy.qtable
+    policy.qtable = {}
+    preparer_agent(agent, optimiser, persistante, chemin_parties, rng)
+    if not persistante and agent.environment.recompenses == recompenses_avant:
+        policy.qtable = qtable_en_memoire

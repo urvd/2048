@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import agent as agent_module  # noqa: E402
 import memoire_ia  # noqa: E402
 from environnement import Environment  # noqa: E402
-from game_params import DEFAULT_DISCOUNT_FACTOR, DEFAULT_LEARNING_RATE  # noqa: E402
+from game_params import DISCOUNT_FACTOR, LEARNING_RATE  # noqa: E402
 from historique import COLONNES, SEPARATEUR, enregistrer_partie, ligne_partie, lire_parties  # noqa: E402
 
 RECOMPENSES = {"default": 1, "goal": 2048, "gameover": -100, "no_effect": -8}
@@ -39,7 +39,7 @@ def partie(score, learning_rate, discount_factor, taille=4, gameover=-100):
 class ChoixParametresTest(unittest.TestCase):
     def test_sans_historique_valeurs_par_defaut(self):
         self.assertEqual(memoire_ia.choisir_parametres([], 4, RECOMPENSES, RngFixe(0.9)),
-                         (DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, RECOMPENSES, "defaut"))
+                         (LEARNING_RATE, DISCOUNT_FACTOR, RECOMPENSES, "defaut"))
 
     def test_reprend_la_meilleure_tentative(self):
         parties = [partie(500, 0.01, 0.2), partie(1800, 0.05, 0.5, gameover=-50), partie(900, 0.1, 0.3)]
@@ -139,6 +139,45 @@ class QTablePersistanteTest(unittest.TestCase):
             memoire_ia.memoriser_fin_de_partie(agent)
         self.assertFalse(os.path.exists(chemin_qtable))
         self.assertEqual(agent.choix_parametres, "defaut")
+
+
+class NouvellePartieTest(unittest.TestCase):
+    """Enchaînement de plusieurs parties dans le même lancement (NB_TOURS_MAX)."""
+
+    def setUp(self):
+        dossier = tempfile.TemporaryDirectory()
+        self.addCleanup(dossier.cleanup)
+        self.dossier = dossier.name
+
+    def _jouer(self, agent):
+        with mock.patch.object(agent_module, "MODE_APPRENTISSAGE", True):
+            agent.do(init=True)
+            while agent.continue_game():
+                agent.do()
+
+    def test_sans_persistance_l_apprentissage_reste_en_memoire(self):
+        agent = agent_module.Agent(Environment(3))
+        self._jouer(agent)
+        etats = set(agent.learning_policy.qtable)
+        agent.reset()
+        memoire_ia.nouvelle_partie(agent, optimiser=False, persistante=False)
+        self.assertTrue(agent.continue_game())
+        self.assertEqual(set(agent.learning_policy.qtable), etats)
+
+    def test_avec_persistance_qtable_rechargee_et_parametres_choisis(self):
+        chemin_qtable = os.path.join(self.dossier, "qtable.json")
+        chemin_parties = os.path.join(self.dossier, "parties.csv")
+        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": chemin_qtable}):
+            agent = agent_module.Agent(Environment(3))
+            memoire_ia.preparer_agent(agent, True, True, chemin_parties, RngFixe(0.9))
+            self._jouer(agent)
+            memoire_ia.memoriser_fin_de_partie(agent)
+            enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
+            etats = set(agent.learning_policy.qtable)
+            agent.reset()
+            memoire_ia.nouvelle_partie(agent, True, True, chemin_parties, RngFixe(0.9))
+        self.assertEqual(agent.choix_parametres, "meilleurs")
+        self.assertTrue(etats <= set(agent.learning_policy.qtable))
 
 
 class MigrationCsvTest(unittest.TestCase):
