@@ -1,15 +1,18 @@
-from game_params import MODE_APPRENTISSAGE
+from game_params import MODE_APPRENTISSAGE, VISION_SIMPLIFIEE
 from learning_policy import LearningPolicy
+from vision import etat_simplifie
 
 
 class Agent:
-    def __init__(self, environment):
+    def __init__(self, environment, vision_simplifiee=VISION_SIMPLIFIEE):
         self.environment = environment
+        # 4e approche : la Q-table utilise une vision simplifiée de la grille (vision.py)
+        self.vision_simplifiee = vision_simplifiee
         # self.state = environment.states
         # self.previous_state = self.environment.previous_states
         #self.last_action = 'U'
         #self.previous_action = None
-        self.learning_policy = LearningPolicy(states_sign=self.environment.get_state(), \
+        self.learning_policy = LearningPolicy(states_sign=self.etat_courant(), \
                                               actions={'U', 'D', 'L', 'R'}, \
                                               game_lenght=self.environment.length)
         self.set()
@@ -24,6 +27,18 @@ class Agent:
         self.continu = True
         self.start = True
        
+    def _etat(self, states, signature_grille):
+        """Clé de la Q-table : grille simplifiée, ou grille exacte si la vision simplifiée est désactivée."""
+        if self.vision_simplifiee:
+            return etat_simplifie(states, self.environment.length)
+        return signature_grille()
+
+    def etat_courant(self):
+        return self._etat(self.environment.states, self.environment.get_state)
+
+    def etat_precedent(self):
+        return self._etat(self.environment.previous_states, self.environment.get_pre_state)
+
     def getState(self):
         return self.environment.states
     def getStateLength(self):
@@ -47,7 +62,7 @@ class Agent:
         #Calcul de la meilleur actions à réaliser selon l'état en cours du jeux de l'environnement
         action = ''
         if MODE_APPRENTISSAGE:
-            action = self.learning_policy.best_action(state=self.environment.get_state(),\
+            action = self.learning_policy.best_action(state=self.etat_courant(),\
                                             last_reward_overload_noaction=self.environment.is_current_reward_overloaded(),\
                                                                 start=self.start)
             self.environment.apply(action)
@@ -68,8 +83,8 @@ class Agent:
         if MODE_APPRENTISSAGE:
             if not init:
                 self.start = False
-                self.learning_policy.update(previous_state=self.environment.get_pre_state(), \
-                                            state=self.environment.get_state(), last_action=action, \
+                self.learning_policy.update(previous_state=self.etat_precedent(), \
+                                            state=self.etat_courant(), last_action=action, \
                                             reward=self.environment.get_current_reward())
             self.last_action = action
     def update_best_score(self):

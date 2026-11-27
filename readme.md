@@ -46,12 +46,29 @@ Exemple de .env :
     OPTIMISER_PARAMETRES=true
     QTABLE_PERSISTANTE=true
 
-- OPTIMISER_PARAMETRES (true par défaut) : learning_rate, discount_factor et les récompenses sont
-  repris de la meilleure tentative du CSV (même taille de grille). Une fois sur 5, l'IA essaie des
-  valeurs voisines et modifie une récompense (goal, gameover ou no_effect, x0.5 ou x2).
-  Sans historique, ce sont les valeurs du .env.
+- OPTIMISER_PARAMETRES (true par défaut) : learning_rate et discount_factor sont repris de la meilleure
+  tentative du CSV, avec 1 essai de valeurs voisines sur 5. Sans historique : valeurs du .env.
+- OPTIMISER_RECOMPENSES (false par défaut) : les récompenses (goal, gameover, no_effect) sont aussi
+  reprises de la meilleure tentative, et un essai en modifie une (x0.5 ou x2). Sinon, ce sont
+  toujours celles du .env et seules les parties jouées avec ces récompenses sont comparées.
 - QTABLE_PERSISTANTE (true par défaut) : à la fin de chaque partie, la Q-table est sauvegardée dans
   le dossier q-table/ (DOSSIER_QTABLE), dans un fichier numéroté comme la tentative du CSV :
-  q-table/qtable_4x4_T12.json. Au lancement, l'IA recharge la Q-table de la tentative la plus
-  récente jouée avec les mêmes récompenses (un essai de récompenses n'efface rien).
+  q-table/qtable_4x4_T12.json. Au lancement, l'IA recharge la tentative la plus récente jouée avec
+  les mêmes récompenses et la même vision (un essai de récompenses n'efface rien). Sinon, la
+  Q-table reste en mémoire pendant la série (NB_TOURS_MAX) et repart de zéro si les récompenses
+  changent.
+- VISION_SIMPLIFIEE (true par défaut) : l'IA voit un résumé de la grille (vision.py) qui se répète
+  d'une partie à l'autre : cases vides (0-1, 2-3, 4-7, 8+), position de la plus grande tuile (coin,
+  bord, centre), fusions possibles en ligne et en colonne (0, 1, 2+) et sens de rangement des
+  lignes et des colonnes. Avec la grille exacte (false), l'IA ne retombe presque jamais sur une
+  situation déjà vue et sa Q-table ne sert pas. Le CSV indique la vision utilisée (colonne vision).
 - FICHIER_PARTIES_IA (parties_ia.csv) et DOSSIER_QTABLE (q-table) : emplacements des fichiers, ignorés par git.
+
+Les quatre réglages sont indépendants. Correspondance avec les approches étudiées :
+
+| Approche | OPTIMISER_PARAMETRES | OPTIMISER_RECOMPENSES | QTABLE_PERSISTANTE | VISION_SIMPLIFIEE |
+|---|---|---|---|---|
+| A | true | false | false | false |
+| B | true | true | false | false |
+| C | true | true | true | false |
+| D | true | true | true | true |

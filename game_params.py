@@ -35,6 +35,8 @@ LEARNING_RATE = float(os.getenv("DEFAULT_LEARNING_RATE", "0.01"))
 DISCOUNT_FACTOR = float(os.getenv("DEFAULT_DISCOUNT_FACTOR", "0.2"))
 # Exploration (epsilon-greedy) : part des coups joués au hasard pour découvrir d'autres actions
 EXPLORATION = min(max(float(os.getenv("EXPLORATION", "0.1")), 0.0), 1.0)
+# 4e approche : l'IA voit une version simplifiée de la grille (voir vision.py)
+VISION_SIMPLIFIEE = env_bool("VISION_SIMPLIFIEE", True)
 
 ##IA game reward
  # score state
@@ -57,6 +59,8 @@ def recompenses_par_defaut():
 #Mémoire de l'IA entre les parties
 # Approche 1 : choisir learning_rate et discount_factor d'après le CSV des parties
 OPTIMISER_PARAMETRES = env_bool("OPTIMISER_PARAMETRES", True)
+# Approche B : les récompenses sont aussi choisies d'après le CSV (sinon : celles du .env)
+OPTIMISER_RECOMPENSES = env_bool("OPTIMISER_RECOMPENSES", False)
 # Approche 2 : sauvegarder la Q-table en fin de partie et la recharger au lancement
 QTABLE_PERSISTANTE = env_bool("QTABLE_PERSISTANTE", True)
 
