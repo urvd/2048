@@ -5,18 +5,21 @@ sont choisis d'après le CSV des parties. On reprend ceux de la meilleure tentat
 de temps en temps, on essaie des valeurs voisines pour découvrir de meilleurs réglages.
 Sans historique, les récompenses sont celles du .env.
 
-Approche 2 (QTABLE_PERSISTANTE) : une Q-table par jeu de récompenses (et par taille de
-grille), sauvegardée en fin de partie dans un fichier JSON local. Au lancement, l'IA
-recharge la Q-table qui correspond aux récompenses choisies : un essai de récompenses
-n'efface donc jamais ce qui a été appris avec les autres.
+Approche 2 (QTABLE_PERSISTANTE) : à la fin de chaque partie, la Q-table est sauvegardée
+dans le dossier q-table/, dans un fichier numéroté comme la tentative du CSV
+(q-table/qtable_4x4_T12.json), avec les récompenses avec lesquelles elle a été apprise.
+Au lancement, l'IA recharge la Q-table de la tentative la plus récente jouée avec les
+mêmes récompenses : un essai de récompenses n'efface donc jamais ce qui a été appris
+avec les autres.
 """
 import json
 import os
 import random
+import re
 
 from game_params import (DISCOUNT_FACTOR, LEARNING_RATE, OPTIMISER_PARAMETRES,
                          QTABLE_PERSISTANTE)
-from historique import lire_parties
+from historique import FICHIER_PARTIES, derniere_tentative, lire_parties
 
 # Probabilité d'essayer des paramètres voisins au lieu des meilleurs
 TAUX_ESSAI = 0.2
@@ -26,17 +29,37 @@ DISCOUNT_FACTOR_MIN, DISCOUNT_FACTOR_MAX = 0.0, 0.99
 RECOMPENSES_OPTIMISEES = ("goal", "gameover", "no_effect")
 
 
-def fichier_qtable(taille, recompenses):
-    """Une Q-table par taille de grille et par jeu de récompenses.
+def dossier_qtable():
+    """Dossier des Q-tables sauvegardées (DOSSIER_QTABLE, q-table par défaut)."""
+    return os.getenv("DOSSIER_QTABLE") or "q-table"
 
-    Exemple : qtable_4x4_d1_g2048_o-100_n-8.json. FICHIER_QTABLE permet de changer le
-    début du nom (et le dossier) : le suffixe des récompenses est toujours ajouté.
-    """
-    base = os.getenv("FICHIER_QTABLE") or f"qtable_{taille}x{taille}.json"
-    racine, extension = os.path.splitext(base)
-    suffixe = (f"d{recompenses['default']}_g{recompenses['goal']}"
-               f"_o{recompenses['gameover']}_n{recompenses['no_effect']}")
-    return f"{racine}_{suffixe}{extension or '.json'}"
+
+def fichier_qtable(taille, tentative, dossier=None):
+    """Fichier de la Q-table sauvegardée à la fin d'une tentative : q-table/qtable_4x4_T12.json."""
+    return os.path.join(dossier or dossier_qtable(), f"qtable_{taille}x{taille}_T{tentative}.json")
+
+
+def qtables_sauvegardees(taille, dossier=None):
+    """Q-tables sauvegardées pour cette taille de grille, de la plus récente à la plus ancienne."""
+    dossier = dossier or dossier_qtable()
+    if not os.path.isdir(dossier):
+        return []
+    motif = re.compile(rf"^qtable_{taille}x{taille}_T(\d+)\.json$")
+    trouvees = [(int(m.group(1)), os.path.join(dossier, nom))
+                for nom in os.listdir(dossier) if (m := motif.match(nom))]
+    return [chemin for _, chemin in sorted(trouvees, reverse=True)]
+
+
+def derniere_qtable(taille, recompenses, dossier=None):
+    """Q-table de la tentative la plus récente jouée avec ces récompenses (None s'il n'y en a pas)."""
+    for chemin in qtables_sauvegardees(taille, dossier):
+        try:
+            with open(chemin, encoding="utf-8") as fichier:
+                if json.load(fichier).get("recompenses") == recompenses:
+                    return chemin
+        except (OSError, ValueError):
+            continue  # fichier illisible : on passe au précédent
+    return None
 
 
 # --- Approche 2 : Q-table persistante -------------------------------------------------
@@ -53,8 +76,7 @@ def sauvegarder_qtable(policy, chemin, taille, recompenses):
 def charger_qtable(policy, chemin, recompenses):
     """Recharge la Q-table sauvegardée. Renvoie le nombre d'états chargés.
 
-    Le nom du fichier dépend des récompenses : par sécurité, une Q-table apprise avec
-    d'autres récompenses (fichier renommé à la main) n'est pas rechargée.
+    Par sécurité, une Q-table apprise avec d'autres récompenses n'est pas rechargée.
     """
     if not os.path.exists(chemin):
         return 0
@@ -134,18 +156,30 @@ def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PER
     print(f"Paramètres de l'IA ({agent.choix_parametres}) : learning_rate={policy.learning_rate}, "
           f"discount_factor={policy.discount_factor}, récompenses={environment.recompenses}")
     if persistante:
-        agent.fichier_qtable = fichier_qtable(environment.length, environment.recompenses)
-        nb_etats = charger_qtable(policy, agent.fichier_qtable, environment.recompenses)
-        print(f"Q-table : {nb_etats} états chargés depuis {agent.fichier_qtable}")
+        # agent.fichier_qtable contient le dossier des Q-tables (None : non persistante)
+        agent.fichier_qtable = dossier_qtable()
+        chemin = derniere_qtable(environment.length, environment.recompenses, agent.fichier_qtable)
+        if chemin is None:
+            print(f"Q-table : aucune sauvegarde avec ces récompenses dans {agent.fichier_qtable}, "
+                  f"l'IA part de zéro")
+        else:
+            nb_etats = charger_qtable(policy, chemin, environment.recompenses)
+            print(f"Q-table : {nb_etats} états chargés depuis {chemin}")
 
 
-def memoriser_fin_de_partie(agent):
-    """À appeler à la fin d'une partie de l'IA : sauvegarde la Q-table si elle est persistante."""
+def memoriser_fin_de_partie(agent, chemin_parties=None):
+    """À appeler à la fin d'une partie de l'IA, avant d'écrire la ligne du CSV.
+
+    Sauvegarde la Q-table (si elle est persistante) dans q-table/qtable_<taille>_T<n>.json,
+    n étant le numéro que la partie va recevoir dans le CSV.
+    """
     if agent.fichier_qtable:
         environment = agent.environment
-        sauvegarder_qtable(agent.learning_policy, agent.fichier_qtable, environment.length,
-                           environment.recompenses)
-        print(f"Q-table sauvegardée : {len(agent.learning_policy.qtable)} états dans {agent.fichier_qtable}")
+        tentative = derniere_tentative(chemin_parties or FICHIER_PARTIES) + 1
+        chemin = fichier_qtable(environment.length, tentative, agent.fichier_qtable)
+        os.makedirs(agent.fichier_qtable, exist_ok=True)
+        sauvegarder_qtable(agent.learning_policy, chemin, environment.length, environment.recompenses)
+        print(f"Q-table sauvegardée : {len(agent.learning_policy.qtable)} états dans {chemin}")
 
 
 def nouvelle_partie(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PERSISTANTE,

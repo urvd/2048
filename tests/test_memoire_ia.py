@@ -87,28 +87,56 @@ class QTablePersistanteTest(unittest.TestCase):
         for etat, valeurs in agent.learning_policy.qtable.items():
             self.assertEqual(nouvel_agent.learning_policy.qtable[etat], valeurs)
 
-    def test_une_qtable_par_jeu_de_recompenses(self):
+    def _fin_de_partie(self, agent, chemin_parties):
+        """Comme le jeu : Q-table sauvegardée, puis ligne ajoutée au CSV."""
+        memoire_ia.memoriser_fin_de_partie(agent, chemin_parties)
+        enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
+
+    def test_un_fichier_par_tentative_dans_le_dossier(self):
         chemin_parties = os.path.join(self.dossier, "parties.csv")
-        base = os.path.join(self.dossier, "qtable.json")
+        dossier_q = os.path.join(self.dossier, "q-table")
+        with mock.patch.dict(os.environ, {"DOSSIER_QTABLE": dossier_q}):
+            for _ in range(3):
+                agent = agent_module.Agent(Environment(3))
+                memoire_ia.preparer_agent(agent, False, True, chemin_parties)
+                self._agent_prepare(agent)
+                self._fin_de_partie(agent, chemin_parties)
+        self.assertEqual(sorted(os.listdir(dossier_q)),
+                         ["qtable_3x3_T1.json", "qtable_3x3_T2.json", "qtable_3x3_T3.json"])
+        self.assertEqual(memoire_ia.qtables_sauvegardees(3, dossier_q)[0],
+                         os.path.join(dossier_q, "qtable_3x3_T3.json"))
+
+    def test_recharge_la_derniere_tentative_avec_les_memes_recompenses(self):
+        chemin_parties = os.path.join(self.dossier, "parties.csv")
+        dossier_q = os.path.join(self.dossier, "q-table")
         autres = dict(RECOMPENSES, gameover=-50)
-        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": base}):
-            self.assertNotEqual(memoire_ia.fichier_qtable(3, RECOMPENSES), memoire_ia.fichier_qtable(3, autres))
-            # partie avec les récompenses du .env, puis partie d'essai avec d'autres récompenses
+        with mock.patch.dict(os.environ, {"DOSSIER_QTABLE": dossier_q}):
+            # T1 avec les récompenses du .env, puis T2 : essai avec d'autres récompenses
             for recompenses in (RECOMPENSES, autres):
                 agent = agent_module.Agent(Environment(3))
                 agent.environment.recompenses = dict(recompenses)
-                memoire_ia.preparer_agent(agent, optimiser=False, persistante=True)
+                memoire_ia.preparer_agent(agent, optimiser=False, persistante=True,
+                                          chemin_parties=chemin_parties)
                 self._agent_prepare(agent)
-                memoire_ia.memoriser_fin_de_partie(agent)
+                self._fin_de_partie(agent, chemin_parties)
                 if recompenses == RECOMPENSES:
                     etats_env = set(agent.learning_policy.qtable)
-            # retour aux récompenses du .env : la Q-table d'origine est intacte
+            self.assertEqual(memoire_ia.derniere_qtable(3, autres, dossier_q),
+                             os.path.join(dossier_q, "qtable_3x3_T2.json"))
+            # retour aux récompenses du .env : c'est T1 qui est rechargée, pas T2
+            self.assertEqual(memoire_ia.derniere_qtable(3, RECOMPENSES, dossier_q),
+                             os.path.join(dossier_q, "qtable_3x3_T1.json"))
             agent = agent_module.Agent(Environment(3))
-            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True)
+            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True,
+                                      chemin_parties=chemin_parties)
         # tous les états appris avec ces récompenses sont retrouvés (+ la grille de départ du nouvel agent)
         self.assertTrue(etats_env <= set(agent.learning_policy.qtable))
         self.assertLessEqual(len(agent.learning_policy.qtable), len(etats_env) + 1)
-        self.assertEqual(len([f for f in os.listdir(self.dossier) if f.endswith(".json")]), 2)
+
+    def test_dossier_absent_ou_vide(self):
+        dossier_q = os.path.join(self.dossier, "q-table")
+        self.assertEqual(memoire_ia.qtables_sauvegardees(4, dossier_q), [])
+        self.assertIsNone(memoire_ia.derniere_qtable(4, RECOMPENSES, dossier_q))
 
     def test_recompenses_changees_qtable_remise_a_zero(self):
         chemin = os.path.join(self.dossier, "qtable.json")
@@ -130,16 +158,14 @@ class QTablePersistanteTest(unittest.TestCase):
         self.assertEqual(nouvel_agent.environment.recompenses["gameover"], -50)
 
     def test_preparer_puis_memoriser(self):
-        chemin_qtable = os.path.join(self.dossier, "qtable.json")
         chemin_parties = os.path.join(self.dossier, "parties.csv")
-        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": chemin_qtable}):
+        with mock.patch.dict(os.environ, {"DOSSIER_QTABLE": os.path.join(self.dossier, "q-table")}):
             # 1re partie : aucun historique, Q-table vide
             agent = agent_module.Agent(Environment(3))
             memoire_ia.preparer_agent(agent, True, True, chemin_parties, RngFixe(0.9))
             self.assertEqual(agent.choix_parametres, "defaut")
             agent = self._agent_prepare(agent)
-            memoire_ia.memoriser_fin_de_partie(agent)
-            enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
+            self._fin_de_partie(agent, chemin_parties)
             # 2e partie : paramètres de la 1re et Q-table rechargée
             agent2 = agent_module.Agent(Environment(3))
             memoire_ia.preparer_agent(agent2, True, True, chemin_parties, RngFixe(0.9))
@@ -155,12 +181,12 @@ class QTablePersistanteTest(unittest.TestCase):
         return agent
 
     def test_desactivee_aucun_fichier(self):
-        chemin_qtable = os.path.join(self.dossier, "qtable.json")
-        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": chemin_qtable}):
+        dossier_q = os.path.join(self.dossier, "q-table")
+        with mock.patch.dict(os.environ, {"DOSSIER_QTABLE": dossier_q}):
             agent = self._agent()
             memoire_ia.preparer_agent(agent, optimiser=False, persistante=False)
-            memoire_ia.memoriser_fin_de_partie(agent)
-        self.assertFalse(os.path.exists(chemin_qtable))
+            memoire_ia.memoriser_fin_de_partie(agent, os.path.join(self.dossier, "parties.csv"))
+        self.assertFalse(os.path.exists(dossier_q))
         self.assertEqual(agent.choix_parametres, "defaut")
 
 
@@ -188,13 +214,12 @@ class NouvellePartieTest(unittest.TestCase):
         self.assertEqual(set(agent.learning_policy.qtable), etats)
 
     def test_avec_persistance_qtable_rechargee_et_parametres_choisis(self):
-        chemin_qtable = os.path.join(self.dossier, "qtable.json")
         chemin_parties = os.path.join(self.dossier, "parties.csv")
-        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": chemin_qtable}):
+        with mock.patch.dict(os.environ, {"DOSSIER_QTABLE": os.path.join(self.dossier, "q-table")}):
             agent = agent_module.Agent(Environment(3))
             memoire_ia.preparer_agent(agent, True, True, chemin_parties, RngFixe(0.9))
             self._jouer(agent)
-            memoire_ia.memoriser_fin_de_partie(agent)
+            memoire_ia.memoriser_fin_de_partie(agent, chemin_parties)
             enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
             etats = set(agent.learning_policy.qtable)
             agent.reset()

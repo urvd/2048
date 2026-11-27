@@ -50,7 +50,8 @@ Exemple de .env :
   repris de la meilleure tentative du CSV (même taille de grille). Une fois sur 5, l'IA essaie des
   valeurs voisines et modifie une récompense (goal, gameover ou no_effect, x0.5 ou x2).
   Sans historique, ce sont les valeurs du .env.
-- QTABLE_PERSISTANTE (true par défaut) : la Q-table est sauvegardée en fin de partie dans
-  qtable_<taille>x<taille>_d<default>_g<goal>_o<gameover>_n<no_effect>.json (une Q-table par
-  jeu de récompenses) et rechargée au lancement suivant.
-- FICHIER_PARTIES_IA (parties_ia.csv) et FICHIER_QTABLE : chemins des fichiers, ignorés par git.
+- QTABLE_PERSISTANTE (true par défaut) : à la fin de chaque partie, la Q-table est sauvegardée dans
+  le dossier q-table/ (DOSSIER_QTABLE), dans un fichier numéroté comme la tentative du CSV :
+  q-table/qtable_4x4_T12.json. Au lancement, l'IA recharge la Q-table de la tentative la plus
+  récente jouée avec les mêmes récompenses (un essai de récompenses n'efface rien).
+- FICHIER_PARTIES_IA (parties_ia.csv) et DOSSIER_QTABLE (q-table) : emplacements des fichiers, ignorés par git.
