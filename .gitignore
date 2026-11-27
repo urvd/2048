@@ -18,3 +18,5 @@ parties_ia.csv
 # Q-tables sauvegardées de l'IA
 qtable_*.json
 qtable_*.json.tmp
+
+.vscode/

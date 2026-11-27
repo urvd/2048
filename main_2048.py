@@ -10,7 +10,7 @@ from agent import Agent
 from historique import enregistrer_partie, ligne_partie
 from memoire_ia import memoriser_fin_de_partie, preparer_agent
 from environnement import Environment
-from game_params import DEFAULT_LEARNING_RATE, REWARD_GAMEOVER, IA_NB_TOURS, GAME_LENGHT, MODE_APPRENTISSAGE, \
+from game_params import NB_TOURS_MAX, GAME_LENGHT, MODE_APPRENTISSAGE, \
     RIGHT, DOWN, LEFT, UP, GAME_SPEED
 
 
@@ -68,7 +68,7 @@ class Game2048Window(Window):
         self.agent = agent
         self.state = self.agent.getState()
         self.length = self.agent.getStateLength()
-        self.summary = Summary(IA_NB_TOURS)
+        self.summary = Summary(NB_TOURS_MAX)
         # ,self.continu = True
         self.summary.current_etape = 0
         self.summary.current_tours = 0

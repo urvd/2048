@@ -22,8 +22,8 @@ def env_bool(nom, defaut):
 
 #game parameters
 GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))
-GAME_LENGHT = 4
-IA_NB_TOURS = 5
+GAME_LENGHT = int(os.getenv("GAME_LENGHT", "4"))
+NB_TOURS_MAX =  int(os.getenv("NB_TOURS_MAX", "50"))
 
  # si false on peut passer on peut jouer en mode joueur
 MODE_APPRENTISSAGE = env_bool("MODE_APPRENTISSAGE", False)
@@ -31,10 +31,8 @@ MODE_APPRENTISSAGE = env_bool("MODE_APPRENTISSAGE", False)
 
 #Paramètres de l'IA par renforcement
 ## learning param
-DEFAULT_LEARNING_RATE = 0.01
-DEFAULT_DISCOUNT_FACTOR = 0.2
-
-
+LEARNING_RATE = float(os.getenv("DEFAULT_LEARNING_RATE", "0.01"))
+DISCOUNT_FACTOR = float(os.getenv("DEFAULT_DISCOUNT_FACTOR", "0.2"))
 
 ##IA game reward
  # score state
