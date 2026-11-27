@@ -33,6 +33,8 @@ MODE_APPRENTISSAGE = env_bool("MODE_APPRENTISSAGE", False)
 ## learning param
 LEARNING_RATE = float(os.getenv("DEFAULT_LEARNING_RATE", "0.01"))
 DISCOUNT_FACTOR = float(os.getenv("DEFAULT_DISCOUNT_FACTOR", "0.2"))
+# Exploration (epsilon-greedy) : part des coups joués au hasard pour découvrir d'autres actions
+EXPLORATION = min(max(float(os.getenv("EXPLORATION", "0.1")), 0.0), 1.0)
 
 ##IA game reward
  # score state

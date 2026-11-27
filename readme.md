@@ -31,6 +31,8 @@ Ces valeurs se règlent aussi dans le fichier .env :
   lancement (1 seconde de pause entre deux parties). Chaque partie est enregistrée dans le CSV
   (et la Q-table sauvegardée) avant la suivante, qui reprend les paramètres choisis d'après le CSV.
 - DEFAULT_LEARNING_RATE (0.01) et DEFAULT_DISCOUNT_FACTOR (0.2) : paramètres de l'IA sans historique
+- EXPLORATION (0.1) : part des coups que l'IA joue au hasard pour découvrir d'autres actions
+  (0 = jamais, 1 = toujours). En cas d'égalité entre actions, l'IA tire au hasard parmi les meilleures.
 - SIMU_INTERVAL_SPEED (0.01) : intervalle en secondes entre deux déplacements de l'IA
 
 # Mémoire de l'IA entre les parties (mode apprentissage)
