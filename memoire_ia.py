@@ -9,8 +9,9 @@ Quatre réglages indépendants (fichier .env) :
   l'IA ne compare que des parties jouées avec ces récompenses.
 - QTABLE_PERSISTANTE    : à la fin de chaque partie, la Q-table est sauvegardée dans q-table/MxM/,
   dans un fichier numéroté comme la tentative du CSV (q-table/4x4/qtable_4x4_T12.json). Au lancement,
-  l'IA recharge la Q-table de la MEILLEURE tentative jouée avec les mêmes récompenses et la même
-  vision (plus grande tuile, puis nombre de cases à cette valeur, puis score).
+  l'IA recharge, parmi les Q-tables apprises avec les mêmes récompenses et la même vision,
+  la plus récente (RECHARGER_QTABLE=recente) ou celle de la meilleure tentative
+  (RECHARGER_QTABLE=meilleure : plus grande tuile, puis nombre de cases à cette valeur, puis score).
   Sinon, la Q-table reste en mémoire pendant la série de parties (NB_TOURS_MAX) et repart de
   zéro si les récompenses changent.
 - VISION_SIMPLIFIEE     : l'IA voit un résumé de la grille (vision.py) au lieu de la grille exacte.
@@ -27,7 +28,7 @@ import random
 import re
 
 from game_params import (DISCOUNT_FACTOR, DOSSIER_QTABLE, LEARNING_RATE, OPTIMISER_PARAMETRES,
-                         OPTIMISER_RECOMPENSES, QTABLE_PERSISTANTE)
+                         OPTIMISER_RECOMPENSES, QTABLE_PERSISTANTE, RECHARGER_QTABLE)
 from historique import FICHIER_PARTIES, derniere_tentative, lire_parties
 
 # Probabilité d'essayer des paramètres voisins au lieu des meilleurs
@@ -103,16 +104,38 @@ def _meme_apprentissage(donnees, recompenses, vision):
             and (donnees.get("vision") or "grille") == vision)
 
 
+def lire_contexte(chemin):
+    """(récompenses, vision) avec lesquelles une Q-table a été apprise (None si illisible)."""
+    try:
+        with open(chemin, encoding="utf-8") as fichier:
+            donnees = json.load(fichier)
+    except (OSError, ValueError):
+        return None
+    return donnees.get("recompenses"), donnees.get("vision") or "grille"
+
+
+def _premiere_compatible(chemins, recompenses, vision):
+    for chemin in chemins:
+        if lire_contexte(chemin) == (recompenses, vision):
+            return chemin
+    return None
+
+
 def meilleure_qtable(taille, recompenses, parties, dossier=None, vision="grille"):
     """Q-table de la meilleure tentative jouée avec ces récompenses et cette vision (ou None)."""
-    for chemin in classer_qtables(taille, parties, dossier):
-        try:
-            with open(chemin, encoding="utf-8") as fichier:
-                if _meme_apprentissage(json.load(fichier), recompenses, vision):
-                    return chemin
-        except (OSError, ValueError):
-            continue  # fichier illisible : on passe au suivant
-    return None
+    return _premiere_compatible(classer_qtables(taille, parties, dossier), recompenses, vision)
+
+
+def plus_recente_qtable(taille, recompenses, dossier=None, vision="grille"):
+    """Q-table de la tentative la plus récente jouée avec ces récompenses et cette vision (ou None)."""
+    return _premiere_compatible(qtables_sauvegardees(taille, dossier), recompenses, vision)
+
+
+def qtable_a_recharger(taille, recompenses, parties, dossier=None, vision="grille", mode=RECHARGER_QTABLE):
+    """Q-table rechargée au lancement selon RECHARGER_QTABLE : "recente" ou "meilleure"."""
+    if mode == "meilleure":
+        return meilleure_qtable(taille, recompenses, parties, dossier, vision)
+    return plus_recente_qtable(taille, recompenses, dossier, vision)
 
 
 def sauvegarder_qtable(policy, chemin, taille, recompenses, vision="grille"):
@@ -209,7 +232,8 @@ def choisir_parametres(parties, taille, recompenses_env, rng=random, optimiser_p
 # --- Points d'entrée utilisés par le jeu ------------------------------------------------
 
 def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PERSISTANTE,
-                   chemin_parties=None, rng=random, optimiser_recompenses=OPTIMISER_RECOMPENSES):
+                   chemin_parties=None, rng=random, optimiser_recompenses=OPTIMISER_RECOMPENSES,
+                   recharger=RECHARGER_QTABLE):
     """À appeler au lancement, avant la première partie de l'IA."""
     environment = agent.environment
     policy = agent.learning_policy
@@ -225,14 +249,15 @@ def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PER
     if persistante:
         # agent.fichier_qtable contient le dossier des Q-tables (None : non persistante)
         agent.fichier_qtable = dossier_qtable(environment.length)
-        chemin = meilleure_qtable(environment.length, environment.recompenses, lire_parties(chemin_parties),
-                                  agent.fichier_qtable, _vision(agent))
+        chemin = qtable_a_recharger(environment.length, environment.recompenses, lire_parties(chemin_parties),
+                                    agent.fichier_qtable, _vision(agent), recharger)
         if chemin is None:
             print(f"Q-table : aucune sauvegarde avec ces récompenses et cette vision dans "
                   f"{agent.fichier_qtable}, l'IA part de zéro")
         else:
             nb_etats = charger_qtable(policy, chemin, environment.recompenses, _vision(agent))
-            print(f"Q-table de la meilleure tentative : {nb_etats} états chargés depuis {chemin}")
+            quelle = "de la meilleure tentative" if recharger == "meilleure" else "la plus récente"
+            print(f"Q-table {quelle} : {nb_etats} états chargés depuis {chemin}")
 
 
 def memoriser_fin_de_partie(agent, chemin_parties=None):
@@ -252,7 +277,8 @@ def memoriser_fin_de_partie(agent, chemin_parties=None):
 
 
 def nouvelle_partie(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PERSISTANTE,
-                    chemin_parties=None, rng=random, optimiser_recompenses=OPTIMISER_RECOMPENSES):
+                    chemin_parties=None, rng=random, optimiser_recompenses=OPTIMISER_RECOMPENSES,
+                    recharger=RECHARGER_QTABLE):
     """Prépare la partie suivante quand l'IA enchaîne plusieurs parties (NB_TOURS_MAX).
 
     À appeler après agent.reset() : les paramètres sont choisis à nouveau d'après le CSV,
@@ -265,7 +291,7 @@ def nouvelle_partie(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PE
     recompenses_avant = dict(agent.environment.recompenses)
     qtable_en_memoire = policy.qtable
     policy.qtable = {}
-    preparer_agent(agent, optimiser, persistante, chemin_parties, rng, optimiser_recompenses)
+    preparer_agent(agent, optimiser, persistante, chemin_parties, rng, optimiser_recompenses, recharger)
     if not persistante:
         if agent.environment.recompenses == recompenses_avant:
             policy.qtable = qtable_en_memoire

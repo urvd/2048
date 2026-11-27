@@ -66,10 +66,16 @@ OPTIMISER_PARAMETRES = env_bool("OPTIMISER_PARAMETRES", True)
 OPTIMISER_RECOMPENSES = env_bool("OPTIMISER_RECOMPENSES", False)
 # Approche 2 : sauvegarder la Q-table en fin de partie et la recharger au lancement
 QTABLE_PERSISTANTE = env_bool("QTABLE_PERSISTANTE", True)
-# Dossier des Q-tables sauvegardées : q-table/<M>x<M>/qtable_<M>x<M>_T<n>.json (M = GAME_LENGHT)
+# Dossier des Q-tables sauvegardées : q-table/<M>x<M>/qtable_<M>x<M>_T<n>.json (M = GAME_LENGHT).
+# Fixé ici (ne se règle pas dans le .env).
 DOSSIER_QTABLE = "q-table/"
+# Q-table rechargée au lancement : "recente" (la plus récente, l'IA continue d'apprendre)
+# ou "meilleure" (celle de la meilleure tentative)
+RECHARGER_QTABLE = os.getenv("RECHARGER_QTABLE", "recente").strip().casefold()
+if RECHARGER_QTABLE not in ("recente", "meilleure"):
+    raise ValueError(f"RECHARGER_QTABLE={RECHARGER_QTABLE} : valeurs possibles recente ou meilleure (fichier .env)")
 # Nettoyage des Q-tables (clean_qtables.py) : nombre de meilleures Q-tables gardées par taille
-MAX_KEEP_BEST_QTABLE = max(1, int(os.getenv("MAX_KEEP_BEST_QTABLE", "10")))
+MAX_KEEP_BEST_QTABLES = max(1, int(os.getenv("MAX_KEEP_BEST_QTABLES", "10")))
 # Nettoyage automatique à la fin de chaque série de parties de l'IA
 NETTOYAGE_AUTO = env_bool("NETTOYAGE_AUTO", True)
 

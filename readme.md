@@ -53,13 +53,18 @@ Exemple de .env :
   toujours celles du .env et seules les parties jouées avec ces récompenses sont comparées.
 - QTABLE_PERSISTANTE (true par défaut) : à la fin de chaque partie, la Q-table est sauvegardée dans
   q-table/MxM/ (M = GAME_LENGHT : 3, 4 ou 5), dans un fichier numéroté comme la tentative du CSV :
-  q-table/4x4/qtable_4x4_T12.json. Au lancement, l'IA recharge la Q-table de la MEILLEURE tentative
-  jouée avec les mêmes récompenses et la même vision. Une tentative est classée d'après sa ligne du
-  CSV : 1. plus grande tuile, 2. nombre de cases à cette valeur (colonne nb_cases_max), 3. score.
+  q-table/4x4/qtable_4x4_T12.json. Au lancement, l'IA recharge une Q-table apprise avec les mêmes
+  récompenses et la même vision, choisie par RECHARGER_QTABLE :
+  - recente (par défaut) : la plus récente, l'IA continue d'apprendre sans rien perdre ;
+  - meilleure : celle de la meilleure tentative. Une tentative est classée d'après sa ligne du CSV :
+    1. plus grande tuile, 2. nombre de cases à cette valeur (colonne nb_cases_max), 3. score.
+    Mesuré sur 10 séries de 200 parties (approche D) : 1 079 points en moyenne contre 1 237 avec
+    recente, car ce qui est appris pendant une partie moins bonne est perdu.
   Sinon, la Q-table reste en mémoire pendant la série (NB_TOURS_MAX) et repart de zéro si les
   récompenses changent.
-- MAX_KEEP_BEST_QTABLE (10) et NETTOYAGE_AUTO (true) : à la fin de chaque série, seules les
-  MAX_KEEP_BEST_QTABLE meilleures Q-tables de chaque taille sont gardées (clean_qtables.py).
+- MAX_KEEP_BEST_QTABLES (10) et NETTOYAGE_AUTO (true) : à la fin de chaque série, seules les
+  MAX_KEEP_BEST_QTABLES meilleures Q-tables de chaque taille sont gardées (clean_qtables.py). Avec
+  RECHARGER_QTABLE=recente, la plus récente de chaque combinaison récompenses/vision est aussi gardée.
 - VISION_SIMPLIFIEE (true par défaut) : l'IA voit un résumé de la grille (vision.py) qui se répète
   d'une partie à l'autre : cases vides (0-1, 2-3, 4-7, 8+), position de la plus grande tuile (coin,
   bord, centre), fusions possibles en ligne et en colonne (0, 1, 2+) et sens de rangement des
@@ -78,7 +83,7 @@ Les quatre réglages sont indépendants. Correspondance avec les approches étud
 | D | true | true | true | true |
 
 # Nettoyage des Q-tables
-    python clean_qtables.py                 # garde les MAX_KEEP_BEST_QTABLE meilleures de chaque taille
+    python clean_qtables.py                 # garde les MAX_KEEP_BEST_QTABLES meilleures de chaque taille
     python clean_qtables.py --taille 4      # seulement q-table/4x4
     python clean_qtables.py --garder 5      # garder 5 Q-tables
     python clean_qtables.py --simulation    # afficher ce qui serait supprimé, sans rien supprimer

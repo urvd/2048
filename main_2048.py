@@ -223,7 +223,7 @@ class Game2048Window(Window):
         scores = self.summary.scores
         print(f"Série terminée : {len(scores)} partie(s) jouée(s). Meilleur score : {max(scores)}, "
               f"score moyen : {sum(scores) / len(scores):.0f}.")
-        # Nettoyage automatique : on garde les MAX_KEEP_BEST_QTABLE meilleures Q-tables
+        # Nettoyage automatique : on garde les MAX_KEEP_BEST_QTABLES meilleures Q-tables
         if NETTOYAGE_AUTO and self.agent.fichier_qtable:
             supprimes = nettoyer(self.length, dossier=self.agent.fichier_qtable)
             print(f"Nettoyage des Q-tables : {len(supprimes)} fichier(s) supprimé(s) dans {self.agent.fichier_qtable}")

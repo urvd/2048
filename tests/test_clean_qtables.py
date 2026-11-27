@@ -87,9 +87,22 @@ class MeilleureQTableTest(unittest.TestCase):
         parties = [partie(1, 512, 1, 3000), partie(2, 128, 1, 900)]
         with mock.patch.object(memoire_ia, "DOSSIER_QTABLE", racine), \
                 mock.patch.object(memoire_ia, "lire_parties", return_value=parties):
-            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True, chemin_parties=chemin_parties)
+            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True, chemin_parties=chemin_parties,
+                                      recharger="meilleure")
         self.assertIn("etat1", agent.learning_policy.qtable)
         self.assertNotIn("etat2", agent.learning_policy.qtable)
+
+    def test_preparer_agent_charge_la_plus_recente(self):
+        racine = os.path.dirname(self.dossier)
+        agent = agent_module.Agent(Environment(4), vision_simplifiee=False)
+        for n in (1, 2):
+            creer_qtable(self.dossier, n)
+        parties = [partie(1, 512, 1, 3000), partie(2, 128, 1, 900)]
+        with mock.patch.object(memoire_ia, "DOSSIER_QTABLE", racine), \
+                mock.patch.object(memoire_ia, "lire_parties", return_value=parties):
+            memoire_ia.preparer_agent(agent, optimiser=False, persistante=True, recharger="recente")
+        self.assertIn("etat2", agent.learning_policy.qtable)
+        self.assertNotIn("etat1", agent.learning_policy.qtable)
 
 
 class NettoyageTest(unittest.TestCase):
@@ -106,13 +119,28 @@ class NettoyageTest(unittest.TestCase):
         return sorted(int(nom.split("_T")[1].split(".")[0]) for nom in os.listdir(self.dossier))
 
     def test_garde_les_meilleures(self):
-        supprimes = nettoyer(4, garder=10, parties=self.parties, dossier=self.dossier)
+        supprimes = nettoyer(4, garder=10, parties=self.parties, dossier=self.dossier, recharger="meilleure")
         self.assertEqual(len(supprimes), 5)
         self.assertEqual(self._restants(), list(range(6, 16)))
 
     def test_tentatives_absentes_du_csv_supprimees_en_premier(self):
         nettoyer(4, garder=12, parties=self.parties[3:], dossier=self.dossier)  # T1 à T3 absentes du CSV
         self.assertEqual(self._restants(), list(range(4, 16)))
+
+    def test_mode_recente_garde_aussi_la_plus_recente(self):
+        """T16 est la plus récente mais la moins bonne : gardée en mode recente, supprimée en mode meilleure."""
+        creer_qtable(self.dossier, 16)
+        parties = self.parties + [partie(16, 2, 1, 0)]
+        nettoyer(4, garder=3, parties=parties, dossier=self.dossier, recharger="recente")
+        self.assertEqual(self._restants(), [13, 14, 15, 16])
+        nettoyer(4, garder=3, parties=parties, dossier=self.dossier, recharger="meilleure")
+        self.assertEqual(self._restants(), [13, 14, 15])
+
+    def test_mode_recente_une_par_jeu_de_recompenses(self):
+        creer_qtable(self.dossier, 16, dict(RECOMPENSES, gameover=-50))  # essai, moins bonne
+        parties = self.parties + [partie(16, 2, 1, 0)]
+        nettoyer(4, garder=3, parties=parties, dossier=self.dossier, recharger="recente")
+        self.assertEqual(self._restants(), [13, 14, 15, 16])
 
     def test_simulation_ne_supprime_rien(self):
         supprimes = nettoyer(4, garder=3, parties=self.parties, dossier=self.dossier, simulation=True)
@@ -135,6 +163,19 @@ class NettoyageTest(unittest.TestCase):
 
 
 class TailleDuJeuTest(unittest.TestCase):
+    def test_recharger_qtable_invalide_refuse(self):
+        sortie = subprocess.run([sys.executable, "-c", "import game_params"], cwd=RACINE,
+                                env=dict(os.environ, RECHARGER_QTABLE="autre"), capture_output=True, text=True)
+        self.assertNotEqual(sortie.returncode, 0)
+        self.assertIn("recente ou meilleure", sortie.stderr)
+
+    def test_dossier_qtable_fixe_dans_game_params(self):
+        """DOSSIER_QTABLE ne se règle pas dans le .env."""
+        sortie = subprocess.run([sys.executable, "-c", "import game_params; print(game_params.DOSSIER_QTABLE)"],
+                                cwd=RACINE, env=dict(os.environ, DOSSIER_QTABLE="ailleurs/"),
+                                capture_output=True, text=True, check=True)
+        self.assertEqual(sortie.stdout.strip(), "q-table/")
+
     def test_game_lenght_invalide_refuse(self):
         sortie = subprocess.run([sys.executable, "-c", "import game_params"], cwd=RACINE,
                                 env=dict(os.environ, GAME_LENGHT="6"), capture_output=True, text=True)
