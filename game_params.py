@@ -23,6 +23,9 @@ def env_bool(nom, defaut):
 #game parameters
 GAME_SPEED = float(os.getenv("SIMU_INTERVAL_SPEED","0.01"))
 GAME_LENGHT = int(os.getenv("GAME_LENGHT", "4"))
+TAILLES_POSSIBLES = (3, 4, 5)
+if GAME_LENGHT not in TAILLES_POSSIBLES:
+    raise ValueError(f"GAME_LENGHT={GAME_LENGHT} : la taille du jeu doit valoir 3, 4 ou 5 (fichier .env)")
 NB_TOURS_MAX =  int(os.getenv("NB_TOURS_MAX", "50"))
 
  # si false on peut passer on peut jouer en mode joueur
@@ -63,6 +66,12 @@ OPTIMISER_PARAMETRES = env_bool("OPTIMISER_PARAMETRES", True)
 OPTIMISER_RECOMPENSES = env_bool("OPTIMISER_RECOMPENSES", False)
 # Approche 2 : sauvegarder la Q-table en fin de partie et la recharger au lancement
 QTABLE_PERSISTANTE = env_bool("QTABLE_PERSISTANTE", True)
+# Dossier des Q-tables sauvegardées : q-table/<M>x<M>/qtable_<M>x<M>_T<n>.json (M = GAME_LENGHT)
+DOSSIER_QTABLE = "q-table/"
+# Nettoyage des Q-tables (clean_qtables.py) : nombre de meilleures Q-tables gardées par taille
+MAX_KEEP_BEST_QTABLE = max(1, int(os.getenv("MAX_KEEP_BEST_QTABLE", "10")))
+# Nettoyage automatique à la fin de chaque série de parties de l'IA
+NETTOYAGE_AUTO = env_bool("NETTOYAGE_AUTO", True)
 
 # Game state schema
 '''    0 1 2 3

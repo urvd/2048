@@ -7,9 +7,10 @@ Quatre réglages indépendants (fichier .env) :
 - OPTIMISER_RECOMPENSES : les récompenses (goal, gameover, no_effect) sont aussi reprises de la
   meilleure tentative et modifiées lors des essais. Sinon, ce sont toujours celles du .env et
   l'IA ne compare que des parties jouées avec ces récompenses.
-- QTABLE_PERSISTANTE    : à la fin de chaque partie, la Q-table est sauvegardée dans q-table/,
-  dans un fichier numéroté comme la tentative du CSV (q-table/qtable_4x4_T12.json). Au lancement,
-  l'IA recharge la tentative la plus récente jouée avec les mêmes récompenses et la même vision.
+- QTABLE_PERSISTANTE    : à la fin de chaque partie, la Q-table est sauvegardée dans q-table/MxM/,
+  dans un fichier numéroté comme la tentative du CSV (q-table/4x4/qtable_4x4_T12.json). Au lancement,
+  l'IA recharge la Q-table de la MEILLEURE tentative jouée avec les mêmes récompenses et la même
+  vision (plus grande tuile, puis nombre de cases à cette valeur, puis score).
   Sinon, la Q-table reste en mémoire pendant la série de parties (NB_TOURS_MAX) et repart de
   zéro si les récompenses changent.
 - VISION_SIMPLIFIEE     : l'IA voit un résumé de la grille (vision.py) au lieu de la grille exacte.
@@ -25,8 +26,8 @@ import os
 import random
 import re
 
-from game_params import (DISCOUNT_FACTOR, LEARNING_RATE, OPTIMISER_PARAMETRES, OPTIMISER_RECOMPENSES,
-                         QTABLE_PERSISTANTE)
+from game_params import (DISCOUNT_FACTOR, DOSSIER_QTABLE, LEARNING_RATE, OPTIMISER_PARAMETRES,
+                         OPTIMISER_RECOMPENSES, QTABLE_PERSISTANTE)
 from historique import FICHIER_PARTIES, derniere_tentative, lire_parties
 
 # Probabilité d'essayer des paramètres voisins au lieu des meilleurs
@@ -41,27 +42,59 @@ def _vision(agent):
     return "simplifiee" if agent.vision_simplifiee else "grille"
 
 
-# --- Q-table persistante : dossier q-table/, un fichier par tentative --------------------
+# --- Q-table persistante : q-table/<M>x<M>/, un fichier par tentative -----------------
 
-def dossier_qtable():
-    """Dossier des Q-tables sauvegardées (DOSSIER_QTABLE, q-table par défaut)."""
-    return os.getenv("DOSSIER_QTABLE") or "q-table"
+def dossier_qtable(taille):
+    """Dossier des Q-tables d'une taille de grille : q-table/4x4."""
+    return os.path.join(DOSSIER_QTABLE, f"{taille}x{taille}")
 
 
 def fichier_qtable(taille, tentative, dossier=None):
-    """Fichier de la Q-table sauvegardée à la fin d'une tentative : q-table/qtable_4x4_T12.json."""
-    return os.path.join(dossier or dossier_qtable(), f"qtable_{taille}x{taille}_T{tentative}.json")
+    """Fichier de la Q-table sauvegardée à la fin d'une tentative : q-table/4x4/qtable_4x4_T12.json."""
+    return os.path.join(dossier or dossier_qtable(taille), f"qtable_{taille}x{taille}_T{tentative}.json")
+
+
+def _motif(taille):
+    return re.compile(rf"^qtable_{taille}x{taille}_T(\d+)\.json$")
+
+
+def numero_tentative(chemin, taille):
+    """Numéro de tentative d'un fichier de Q-table (None si le nom ne correspond pas)."""
+    m = _motif(taille).match(os.path.basename(chemin))
+    return int(m.group(1)) if m else None
 
 
 def qtables_sauvegardees(taille, dossier=None):
     """Q-tables sauvegardées pour cette taille de grille, de la plus récente à la plus ancienne."""
-    dossier = dossier or dossier_qtable()
+    dossier = dossier or dossier_qtable(taille)
     if not os.path.isdir(dossier):
         return []
-    motif = re.compile(rf"^qtable_{taille}x{taille}_T(\d+)\.json$")
-    trouvees = [(int(m.group(1)), os.path.join(dossier, nom))
-                for nom in os.listdir(dossier) if (m := motif.match(nom))]
-    return [chemin for _, chemin in sorted(trouvees, reverse=True)]
+    trouvees = [(numero_tentative(nom, taille), os.path.join(dossier, nom)) for nom in os.listdir(dossier)]
+    return [chemin for numero, chemin in sorted((t for t in trouvees if t[0] is not None), reverse=True)]
+
+
+def cle_classement(partie):
+    """Qualité d'une tentative, d'après sa ligne du CSV (plus grand = meilleur) :
+    1. la plus grande tuile atteinte, 2. le nombre de cases à cette valeur, 3. le score.
+    Une tentative absente du CSV (ou illisible) est classée en dernier.
+    """
+    try:
+        return (int(partie["meilleure_tuile"]), int(partie.get("nb_cases_max") or 0),
+                int(float(partie["score_total"])))
+    except (KeyError, TypeError, ValueError):
+        return (-1, -1, -1)
+
+
+def classer_qtables(taille, parties, dossier=None):
+    """Q-tables sauvegardées, de la meilleure à la moins bonne (à égalité : la plus récente d'abord)."""
+    par_tentative = {}
+    for partie in parties:
+        if (partie.get("tentative") or "").isdigit():
+            par_tentative[int(partie["tentative"])] = partie
+    chemins = qtables_sauvegardees(taille, dossier)
+    return sorted(chemins, reverse=True,
+                  key=lambda c: (cle_classement(par_tentative.get(numero_tentative(c, taille))),
+                                 numero_tentative(c, taille)))
 
 
 def _meme_apprentissage(donnees, recompenses, vision):
@@ -70,15 +103,15 @@ def _meme_apprentissage(donnees, recompenses, vision):
             and (donnees.get("vision") or "grille") == vision)
 
 
-def derniere_qtable(taille, recompenses, dossier=None, vision="grille"):
-    """Q-table de la tentative la plus récente jouée avec ces récompenses et cette vision (ou None)."""
-    for chemin in qtables_sauvegardees(taille, dossier):
+def meilleure_qtable(taille, recompenses, parties, dossier=None, vision="grille"):
+    """Q-table de la meilleure tentative jouée avec ces récompenses et cette vision (ou None)."""
+    for chemin in classer_qtables(taille, parties, dossier):
         try:
             with open(chemin, encoding="utf-8") as fichier:
                 if _meme_apprentissage(json.load(fichier), recompenses, vision):
                     return chemin
         except (OSError, ValueError):
-            continue  # fichier illisible : on passe au précédent
+            continue  # fichier illisible : on passe au suivant
     return None
 
 
@@ -191,21 +224,21 @@ def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PER
           f"vision={_vision(agent)}")
     if persistante:
         # agent.fichier_qtable contient le dossier des Q-tables (None : non persistante)
-        agent.fichier_qtable = dossier_qtable()
-        chemin = derniere_qtable(environment.length, environment.recompenses, agent.fichier_qtable,
-                                 _vision(agent))
+        agent.fichier_qtable = dossier_qtable(environment.length)
+        chemin = meilleure_qtable(environment.length, environment.recompenses, lire_parties(chemin_parties),
+                                  agent.fichier_qtable, _vision(agent))
         if chemin is None:
             print(f"Q-table : aucune sauvegarde avec ces récompenses et cette vision dans "
                   f"{agent.fichier_qtable}, l'IA part de zéro")
         else:
             nb_etats = charger_qtable(policy, chemin, environment.recompenses, _vision(agent))
-            print(f"Q-table : {nb_etats} états chargés depuis {chemin}")
+            print(f"Q-table de la meilleure tentative : {nb_etats} états chargés depuis {chemin}")
 
 
 def memoriser_fin_de_partie(agent, chemin_parties=None):
     """À appeler à la fin d'une partie de l'IA, avant d'écrire la ligne du CSV.
 
-    Sauvegarde la Q-table (si elle est persistante) dans q-table/qtable_<taille>_T<n>.json,
+    Sauvegarde la Q-table (si elle est persistante) dans q-table/MxM/qtable_MxM_T<n>.json,
     n étant le numéro que la partie va recevoir dans le CSV.
     """
     if agent.fichier_qtable:

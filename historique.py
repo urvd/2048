@@ -18,6 +18,7 @@ COLONNES = [
     "nb_etapes",
     "score_total",
     "meilleure_tuile",
+    "nb_cases_max",
     "tuile_2048_trouvee",
     "duree_secondes",
     # Paramètres du jeu
@@ -49,6 +50,7 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
         "nb_etapes": nb_etapes,
         "score_total": agent.state_score,
         "meilleure_tuile": max(environment.states.values()),
+        "nb_cases_max": list(environment.states.values()).count(max(environment.states.values())),
         "tuile_2048_trouvee": "oui" if environment.goal else "non",
         "duree_secondes": round(duree_secondes, 1),
         "intervalle_deplacement": GAME_SPEED,

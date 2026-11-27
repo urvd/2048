@@ -9,8 +9,9 @@ from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, 
 from agent import Agent
 from historique import enregistrer_partie, ligne_partie
 from memoire_ia import memoriser_fin_de_partie, nouvelle_partie, preparer_agent
+from clean_qtables import nettoyer
 from environnement import Environment
-from game_params import NB_TOURS_MAX, GAME_LENGHT, MODE_APPRENTISSAGE, \
+from game_params import NETTOYAGE_AUTO, NB_TOURS_MAX, GAME_LENGHT, MODE_APPRENTISSAGE, \
     RIGHT, DOWN, LEFT, UP, GAME_SPEED
 
 
@@ -222,6 +223,10 @@ class Game2048Window(Window):
         scores = self.summary.scores
         print(f"Série terminée : {len(scores)} partie(s) jouée(s). Meilleur score : {max(scores)}, "
               f"score moyen : {sum(scores) / len(scores):.0f}.")
+        # Nettoyage automatique : on garde les MAX_KEEP_BEST_QTABLE meilleures Q-tables
+        if NETTOYAGE_AUTO and self.agent.fichier_qtable:
+            supprimes = nettoyer(self.length, dossier=self.agent.fichier_qtable)
+            print(f"Nettoyage des Q-tables : {len(supprimes)} fichier(s) supprimé(s) dans {self.agent.fichier_qtable}")
 
     # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):
