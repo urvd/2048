@@ -1,18 +1,21 @@
 # import math
 # from sklearn.neural_network import MLPRegressor
 # import numpy as np
+import random
+
 from game_params import generateDefaultAction, LEARNING_RATE, \
-    DISCOUNT_FACTOR
+    DISCOUNT_FACTOR, EXPLORATION
 
 
 class LearningPolicy: #Q-table
     def __init__(self, states_sign, actions, game_lenght, learning_rate=LEARNING_RATE,
-                 discount_factor=DISCOUNT_FACTOR):
+                 discount_factor=DISCOUNT_FACTOR, exploration=EXPLORATION):
         # Q-table indexée directement par la signature de l'état : accès en O(1)
         # et aucune limite sur le nombre d'états rencontrés.
         self.qtable = {}
         self.learning_rate = learning_rate
         self.discount_factor = discount_factor
+        self.exploration = exploration
         self.actions = actions
         self._chosensActions = None
         self.nb_successif_overload_action = 0
@@ -41,8 +44,6 @@ class LearningPolicy: #Q-table
         if start is True:
             self._chosensActions = ''
 
-        action = None
-
         if state in self.qtable:
             if last_reward_overload_noaction is True:
                 self.nb_successif_overload_action += 1
@@ -53,10 +54,17 @@ class LearningPolicy: #Q-table
                 # return ACTIONS[0]'
                 return c
 
+            # Exploration : de temps en temps un coup au hasard, noté (e)
+            if random.random() < self.exploration:
+                c = generateDefaultAction()
+                self._chosensActions += c + '(e) '
+                return c
+
+            # Meilleure action ; en cas d'égalité (ex. état jamais appris, tout à 0),
+            # tirage au hasard parmi les meilleures au lieu de toujours la même direction
             q_state = self.qtable[state]
-            for a in q_state:
-                if action is None or q_state[a] >= q_state[action]:
-                    action = a
+            meilleure_valeur = max(q_state.values())
+            action = random.choice(sorted(a for a, q in q_state.items() if q == meilleure_valeur))
 
             self._chosensActions += action + '(' + str(q_state[action]) + ') '
             return action
