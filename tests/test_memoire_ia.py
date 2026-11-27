@@ -11,7 +11,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 import agent as agent_module  # noqa: E402
 import memoire_ia  # noqa: E402
 from environnement import Environment  # noqa: E402
-from game_params import DEFAULT_DISCOUNT_FACTOR, DEFAULT_LEARNING_RATE  # noqa: E402
+from game_params import DISCOUNT_FACTOR, LEARNING_RATE  # noqa: E402
 from historique import COLONNES, SEPARATEUR, enregistrer_partie, ligne_partie, lire_parties  # noqa: E402
 
 RECOMPENSES = {"default": 1, "goal": 2048, "gameover": -100, "no_effect": -8}
@@ -39,7 +39,7 @@ def partie(score, learning_rate, discount_factor, taille=4, gameover=-100):
 class ChoixParametresTest(unittest.TestCase):
     def test_sans_historique_valeurs_par_defaut(self):
         self.assertEqual(memoire_ia.choisir_parametres([], 4, RECOMPENSES, RngFixe(0.9)),
-                         (DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, "defaut"))
+                         (LEARNING_RATE, DISCOUNT_FACTOR, "defaut"))
 
     def test_reprend_la_meilleure_tentative(self):
         parties = [partie(500, 0.01, 0.2), partie(1800, 0.05, 0.5), partie(900, 0.1, 0.3)]

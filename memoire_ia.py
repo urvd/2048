@@ -12,7 +12,7 @@ import json
 import os
 import random
 
-from game_params import (DEFAULT_DISCOUNT_FACTOR, DEFAULT_LEARNING_RATE, OPTIMISER_PARAMETRES,
+from game_params import (DISCOUNT_FACTOR, LEARNING_RATE, OPTIMISER_PARAMETRES,
                          QTABLE_PERSISTANTE)
 from historique import lire_parties
 
@@ -80,7 +80,7 @@ def choisir_parametres(parties, taille, recompenses, rng=random):
     """Renvoie (learning_rate, discount_factor, choix) avec choix = defaut, meilleurs ou essai."""
     meilleure = meilleure_partie(parties, taille, recompenses)
     if meilleure is None:
-        return DEFAULT_LEARNING_RATE, DEFAULT_DISCOUNT_FACTOR, "defaut"
+        return LEARNING_RATE, DISCOUNT_FACTOR, "defaut"
     learning_rate = float(meilleure["learning_rate"])
     discount_factor = float(meilleure["discount_factor"])
     if rng.random() >= TAUX_ESSAI:
