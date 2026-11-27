@@ -25,6 +25,7 @@ COLONNES = [
     # Paramètres de l'IA
     "learning_rate",
     "discount_factor",
+    "exploration",
     "reward_default",
     "reward_goal",
     "reward_gameover",
@@ -52,6 +53,7 @@ def ligne_partie(agent, nb_etapes, duree_secondes):
         "intervalle_deplacement": GAME_SPEED,
         "learning_rate": policy.learning_rate,
         "discount_factor": policy.discount_factor,
+        "exploration": policy.exploration,
         "reward_default": recompenses["default"],
         "reward_goal": recompenses["goal"],
         "reward_gameover": recompenses["gameover"],
