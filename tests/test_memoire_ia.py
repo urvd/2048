@@ -122,6 +122,45 @@ class QTablePersistanteTest(unittest.TestCase):
         self.assertEqual(agent.choix_parametres, "defaut")
 
 
+class NouvellePartieTest(unittest.TestCase):
+    """Enchaînement de plusieurs parties dans le même lancement (NB_TOURS_MAX)."""
+
+    def setUp(self):
+        dossier = tempfile.TemporaryDirectory()
+        self.addCleanup(dossier.cleanup)
+        self.dossier = dossier.name
+
+    def _jouer(self, agent):
+        with mock.patch.object(agent_module, "MODE_APPRENTISSAGE", True):
+            agent.do(init=True)
+            while agent.continue_game():
+                agent.do()
+
+    def test_sans_persistance_l_apprentissage_reste_en_memoire(self):
+        agent = agent_module.Agent(Environment(3))
+        self._jouer(agent)
+        etats = set(agent.learning_policy.qtable)
+        agent.reset()
+        memoire_ia.nouvelle_partie(agent, optimiser=False, persistante=False)
+        self.assertTrue(agent.continue_game())
+        self.assertEqual(set(agent.learning_policy.qtable), etats)
+
+    def test_avec_persistance_qtable_rechargee_et_parametres_choisis(self):
+        chemin_qtable = os.path.join(self.dossier, "qtable.json")
+        chemin_parties = os.path.join(self.dossier, "parties.csv")
+        with mock.patch.dict(os.environ, {"FICHIER_QTABLE": chemin_qtable}):
+            agent = agent_module.Agent(Environment(3))
+            memoire_ia.preparer_agent(agent, True, True, chemin_parties, RngFixe(0.9))
+            self._jouer(agent)
+            memoire_ia.memoriser_fin_de_partie(agent)
+            enregistrer_partie(ligne_partie(agent, 10, 1.0), chemin_parties)
+            etats = set(agent.learning_policy.qtable)
+            agent.reset()
+            memoire_ia.nouvelle_partie(agent, True, True, chemin_parties, RngFixe(0.9))
+        self.assertEqual(agent.choix_parametres, "meilleurs")
+        self.assertTrue(etats <= set(agent.learning_policy.qtable))
+
+
 class MigrationCsvTest(unittest.TestCase):
     def test_ancien_en_tete_mis_a_jour(self):
         with tempfile.TemporaryDirectory() as dossier:

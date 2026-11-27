@@ -25,6 +25,14 @@ Vous pouvez manipuler les valeurs suivantes dans le fichier game_params.py :
 - GAME_SPEED: modification de la rapidité du jeux
 - MODE_APPRENTISSAGE: pour jouer en manuel ou apprentisge
 
+Ces valeurs se règlent aussi dans le fichier .env :
+- GAME_LENGHT (4) : taille de la grille
+- NB_TOURS_MAX (50) : en mode apprentissage, nombre de parties que l'IA enchaîne dans un même
+  lancement (1 seconde de pause entre deux parties). Chaque partie est enregistrée dans le CSV
+  (et la Q-table sauvegardée) avant la suivante, qui reprend les paramètres choisis d'après le CSV.
+- DEFAULT_LEARNING_RATE (0.01) et DEFAULT_DISCOUNT_FACTOR (0.2) : paramètres de l'IA sans historique
+- SIMU_INTERVAL_SPEED (0.01) : intervalle en secondes entre deux déplacements de l'IA
+
 # Mémoire de l'IA entre les parties (mode apprentissage)
 Variables d'environnement, à mettre dans un fichier .env à la racine du projet (chargé automatiquement
 au lancement grâce à python-dotenv ; une variable définie dans le terminal reste prioritaire).
@@ -32,6 +40,7 @@ Valeurs oui/non acceptées : true, True, 1, oui, yes, vrai.
 Exemple de .env :
 
     MODE_APPRENTISSAGE=true
+    NB_TOURS_MAX=50
     OPTIMISER_PARAMETRES=true
     QTABLE_PERSISTANTE=true
 

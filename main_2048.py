@@ -8,7 +8,7 @@ from arcade import Window, run, color, draw_point, draw_text, draw_rect_filled, 
 
 from agent import Agent
 from historique import enregistrer_partie, ligne_partie
-from memoire_ia import memoriser_fin_de_partie, preparer_agent
+from memoire_ia import memoriser_fin_de_partie, nouvelle_partie, preparer_agent
 from environnement import Environment
 from game_params import NB_TOURS_MAX, GAME_LENGHT, MODE_APPRENTISSAGE, \
     RIGHT, DOWN, LEFT, UP, GAME_SPEED
@@ -44,6 +44,8 @@ class Summary:
 SCREEN_WIDTH = 800
 SCREEN_HEIGHT = 700
 SCREEN_TITLE = "-- 2048 --"
+# Mode apprentissage : pause entre deux parties, pour voir la grille finale
+PAUSE_ENTRE_PARTIES = 1.0
 
 # Text
 TEXT_TOURS_XDIM = TEXT_ETAPE_XDIM = 50
@@ -68,7 +70,10 @@ class Game2048Window(Window):
         self.agent = agent
         self.state = self.agent.getState()
         self.length = self.agent.getStateLength()
-        self.summary = Summary(NB_TOURS_MAX)
+        # Nombre de parties que l'IA enchaîne en mode apprentissage (au moins 1)
+        self.nb_tours_max = max(1, NB_TOURS_MAX)
+        self.summary = Summary(self.nb_tours_max)
+        self.temps_depuis_fin = 0.0
         # ,self.continu = True
         self.summary.current_etape = 0
         self.summary.current_tours = 0
@@ -94,7 +99,10 @@ class Game2048Window(Window):
 
     def _render_game_core(self):
         #render text : Element resumé du jeux
-        self._text(50, self.text_top_y, "Tours : " + str(self.summary.current_tours + 1))
+        tours = "Tours : " + str(self.summary.current_tours + 1)
+        if MODE_APPRENTISSAGE:
+            tours += " / " + str(self.nb_tours_max)
+        self._text(50, self.text_top_y, tours)
         self._text(50, self.text_top_y - 30, "Etape : " + str(self.summary.current_etape + 1))
         self._text(self.text_right_x, self.text_top_y, "Best score : " + str(self.agent.final_score))
         self._text(self.text_right_x, self.text_top_y - 30, "Current score : " + str(self.agent.state_score))
@@ -112,6 +120,11 @@ class Game2048Window(Window):
         if not MODE_APPRENTISSAGE:
             aide = "Flèches : Fusionner et décaler les cases | " + aide
         draw_text(aide, 100, 40, color.BLACK, 14)
+
+        #render text : fin de la série de parties de l'IA
+        if MODE_APPRENTISSAGE and self.series_terminee():
+            draw_text(f"Terminé : {len(self.summary.scores)} parties", self.action_x,
+                      self.grid_end - 160, color.DARK_BLUE, 16)
 
         #render text : Dans le cas ou l'IA trouve le 2048.
         if self.agent.found2048() is True:
@@ -181,6 +194,34 @@ class Game2048Window(Window):
                                      time.monotonic() - self.debut_partie)
                 chemin, tentative = enregistrer_partie(ligne)
                 print(f"Tentative {tentative} enregistrée dans {chemin}")
+                if self.series_terminee():
+                    self._afficher_bilan_serie()
+
+        # Mode apprentissage : partie suivante après une courte pause, jusqu'à NB_TOURS_MAX
+        if MODE_APPRENTISSAGE and self.partie_enregistree and not self.series_terminee():
+            self.temps_depuis_fin += delta_time
+            if self.temps_depuis_fin >= PAUSE_ENTRE_PARTIES:
+                self._partie_suivante()
+
+    def series_terminee(self):
+        """Vrai quand l'IA a joué ses NB_TOURS_MAX parties."""
+        return len(self.summary.scores) >= self.nb_tours_max
+
+    def _partie_suivante(self):
+        self.summary.current_tours += 1
+        self.summary.current_etape = 0
+        self.agent.reset()
+        nouvelle_partie(self.agent)
+        self.state = self.agent.getState()
+        self.partie_enregistree = False
+        self.temps_depuis_fin = 0.0
+        self.temps_depuis_coup = 0.0
+        self.debut_partie = time.monotonic()
+
+    def _afficher_bilan_serie(self):
+        scores = self.summary.scores
+        print(f"Série terminée : {len(scores)} partie(s) jouée(s). Meilleur score : {max(scores)}, "
+              f"score moyen : {sum(scores) / len(scores):.0f}.")
 
     # Event : Les touches du clavier pour jouer en mode joueur
     def on_key_press(self, k, modifiers):
