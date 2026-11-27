@@ -52,3 +52,14 @@ Exemple de .env :
 - QTABLE_PERSISTANTE (true par défaut) : la Q-table est sauvegardée en fin de partie dans
   qtable_<taille>x<taille>.json et rechargée au lancement suivant.
 - FICHIER_PARTIES_IA (parties_ia.csv) et FICHIER_QTABLE : chemins des fichiers, ignorés par git.
+
+# 4e approche : vision simplifiée de la grille (branche dev-optimize4)
+Avec la grille exacte, l'IA ne retombe presque jamais sur une situation déjà vue : sa Q-table ne
+sert pas. Ici, l'IA voit un résumé de la grille (vision.py) qui se répète d'une partie à l'autre :
+cases vides (0-1, 2-3, 4-7, 8+), position de la plus grande tuile (coin, bord, centre), fusions
+possibles en ligne et en colonne (0, 1, 2+) et sens de rangement des lignes et des colonnes.
+- VISION_SIMPLIFIEE (true par défaut) : false pour revenir à la grille exacte et comparer.
+- La Q-table de la vision simplifiée est sauvegardée à part : qtable_<taille>x<taille>_simplifie.json.
+- Le CSV indique la vision utilisée (colonne vision) ; les paramètres ne sont repris que de parties
+  jouées avec la même vision.
+

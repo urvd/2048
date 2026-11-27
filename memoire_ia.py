@@ -22,9 +22,13 @@ LEARNING_RATE_MIN, LEARNING_RATE_MAX = 0.001, 1.0
 DISCOUNT_FACTOR_MIN, DISCOUNT_FACTOR_MAX = 0.0, 0.99
 
 
-def fichier_qtable(taille):
-    """Une Q-table par taille de grille (les états d'une grille 3x3 et 4x4 n'ont rien en commun)."""
-    return os.getenv("FICHIER_QTABLE") or f"qtable_{taille}x{taille}.json"
+def fichier_qtable(taille, vision_simplifiee=False):
+    """Une Q-table par taille de grille et par vision (grille exacte ou simplifiée)."""
+    if os.getenv("FICHIER_QTABLE"):
+        racine, extension = os.path.splitext(os.getenv("FICHIER_QTABLE"))
+    else:
+        racine, extension = f"qtable_{taille}x{taille}", ".json"
+    return f"{racine}_simplifie{extension}" if vision_simplifiee else f"{racine}{extension}"
 
 
 # --- Approche 2 : Q-table persistante -------------------------------------------------
@@ -54,10 +58,11 @@ def charger_qtable(policy, chemin, recompenses):
 
 # --- Approche 1 : paramètres choisis d'après le CSV ------------------------------------
 
-def _meme_contexte(partie, taille, recompenses):
-    """La partie a-t-elle été jouée avec la même taille de grille et les mêmes récompenses ?"""
+def _meme_contexte(partie, taille, recompenses, vision="grille"):
+    """Même taille de grille, mêmes récompenses et même vision (grille ou simplifiée) ?"""
     try:
-        return (int(partie["taille_grille"]) == taille
+        return ((partie.get("vision") or "grille") == vision
+                and int(partie["taille_grille"]) == taille
                 and int(partie["reward_default"]) == recompenses["default"]
                 and int(partie["reward_goal"]) == recompenses["goal"]
                 and int(partie["reward_gameover"]) == recompenses["gameover"]
@@ -66,9 +71,9 @@ def _meme_contexte(partie, taille, recompenses):
         return False
 
 
-def meilleure_partie(parties, taille, recompenses):
+def meilleure_partie(parties, taille, recompenses, vision="grille"):
     """Partie au meilleur score parmi celles jouées dans le même contexte (None s'il n'y en a pas)."""
-    comparables = [p for p in parties if _meme_contexte(p, taille, recompenses)]
+    comparables = [p for p in parties if _meme_contexte(p, taille, recompenses, vision)]
     return max(comparables, key=lambda p: float(p["score_total"]), default=None)
 
 
@@ -76,9 +81,9 @@ def _borner(valeur, minimum, maximum):
     return round(min(max(valeur, minimum), maximum), 4)
 
 
-def choisir_parametres(parties, taille, recompenses, rng=random):
+def choisir_parametres(parties, taille, recompenses, rng=random, vision="grille"):
     """Renvoie (learning_rate, discount_factor, choix) avec choix = defaut, meilleurs ou essai."""
-    meilleure = meilleure_partie(parties, taille, recompenses)
+    meilleure = meilleure_partie(parties, taille, recompenses, vision)
     if meilleure is None:
         return LEARNING_RATE, DISCOUNT_FACTOR, "defaut"
     learning_rate = float(meilleure["learning_rate"])
@@ -101,11 +106,12 @@ def preparer_agent(agent, optimiser=OPTIMISER_PARAMETRES, persistante=QTABLE_PER
     policy = agent.learning_policy
     if optimiser:
         policy.learning_rate, policy.discount_factor, agent.choix_parametres = choisir_parametres(
-            lire_parties(chemin_parties), environment.length, environment.recompenses, rng)
+            lire_parties(chemin_parties), environment.length, environment.recompenses, rng,
+            "simplifiee" if agent.vision_simplifiee else "grille")
     print(f"Paramètres de l'IA ({agent.choix_parametres}) : learning_rate={policy.learning_rate}, "
           f"discount_factor={policy.discount_factor}")
     if persistante:
-        agent.fichier_qtable = fichier_qtable(environment.length)
+        agent.fichier_qtable = fichier_qtable(environment.length, agent.vision_simplifiee)
         nb_etats = charger_qtable(policy, agent.fichier_qtable, environment.recompenses)
         print(f"Q-table : {nb_etats} états chargés depuis {agent.fichier_qtable}")
 
